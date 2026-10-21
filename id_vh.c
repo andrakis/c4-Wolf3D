@@ -22,13 +22,13 @@ void VWB_DrawPropString(const char* string)
 	if(dest == NULL) return;
 
 	font = (fontstruct *) grsegs[STARTFONT+fontnumber];
-	height = font->height;
+	height = FONT_HEIGHT(font);
 	dest += scaleFactor * (ylookup[py] + px);
 
 	while ((ch = (byte)*string++)!=0)
 	{
-		width = step = font->width[ch];
-		source = ((byte *)font)+font->location[ch];
+		width = step = FONT_WIDTH(font, ch);
+		source = ((byte *)font)+FONT_LOC(font, ch);
 		while (width--)
 		{
 			for(i=0; i<height; i++)
@@ -53,9 +53,9 @@ void VWB_DrawPropString(const char* string)
 
 void VWL_MeasureString (const char *string, word *width, word *height, fontstruct *font)
 {
-	*height = font->height;
+	*height = FONT_HEIGHT(font);
 	for (*width = 0;*string;string++)
-		*width += font->width[*((byte *)string)];	// proportional width
+		*width += FONT_WIDTH(font, *((byte *)string));	// proportional width
 }
 
 void VW_MeasurePropString (const char *string, word *width, word *height)
@@ -75,9 +75,14 @@ void VH_UpdateScreen (SDL_Surface *surface)
 {
 	SDL_BlitSurface (surface,NULL,screen,NULL);
 
-    SDL_UpdateTexture(texture, NULL, screen->pixels, screenPitch);
-    SDL_RenderCopy(renderer, texture, NULL, NULL);
-    SDL_RenderPresent(renderer);
+    VH_Present ();
+}
+
+// c4sdl: the 8-bit screen goes to the window with its palette
+void VH_Present (void)
+{
+    c4sdl_present ((byte *) screen->pixels, screenWidth, screenHeight, screenPitch,
+        screen->format->palette->colors);
 }
 
 void VWB_DrawTile8 (int x, int y, int tile)
@@ -290,9 +295,7 @@ boolean FizzleFade (SDL_Surface *source, int x1, int y1,
 
         VL_UnlockSurface(screen);
 
-        SDL_UpdateTexture(texture, NULL, screen->pixels, screenPitch);
-        SDL_RenderCopy(renderer, texture, NULL, NULL);
-        SDL_RenderPresent(renderer);
+        VH_Present ();
 
         frame++;
         Delay(frame - GetTimeCount());        // don't go too fast

@@ -28,9 +28,10 @@ int      screenBits = 8;
 int      screenBits = 16;
 #endif
 #else
-int16_t  screenWidth = 640;
-int16_t  screenHeight = 400;
-int      screenBits = -1;      // use "best" color depth according to libSDL
+// c4sdl: the original's 320x200, in 8 bits
+int16_t  screenWidth = 320;
+int16_t  screenHeight = 200;
+int      screenBits = 8;
 #endif
 
 SDL_Surface *screen = NULL;
@@ -54,7 +55,11 @@ SDL_Color palette1[256], palette2[256];
 SDL_Color curpal[256];
 
 
+#ifdef C4IX
+#define CASSERT(x)      // c4lc takes no sizeof in an array size
+#else
 #define CASSERT(x) extern int ASSERT_COMPILE[((x) != 0) * 2 - 1];
+#endif
 #define RGB(r, g, b) {(r)*255/63, (g)*255/63, (b)*255/63, SDL_ALPHA_OPAQUE}
 
 SDL_Color gamepal[]={
@@ -260,7 +265,13 @@ void VL_SetPalette (SDL_Color *palette, bool forceupdate)
     memcpy(curpal, palette, sizeof(SDL_Color) * 256);
 
     if(screenBits == 8)
+    {
+        // c4sdl: an 8-bit screen, as on a VGA, shows a new palette at once
         SDL_SetPaletteColors(screen->format->palette, palette, 0, 256);
+        SDL_SetPaletteColors(screenBuffer->format->palette, palette, 0, 256);
+        if (forceupdate)
+            VH_Present ();
+    }
     else
     {
         SDL_SetPaletteColors(screenBuffer->format->palette, palette, 0, 256);

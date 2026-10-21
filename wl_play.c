@@ -36,11 +36,11 @@ objtype *player,*lastobj,*objfreelist;
 boolean singlestep,godmode,noclip,ammocheat,mapreveal;
 int     extravbls;
 
-tiletype tilemap[MAPSIZE][MAPSIZE]; // wall values only
-bool     spotvis[MAPSIZE][MAPSIZE];
-objtype *actorat[MAPSIZE][MAPSIZE];
+tiletype tilemap[(MAPSIZE) * (MAPSIZE)]; // wall values only
+bool     spotvis[(MAPSIZE) * (MAPSIZE)];
+objtype *actorat[(MAPSIZE) * (MAPSIZE)];
 #ifdef REVEALMAP
-bool     mapseen[MAPSIZE][MAPSIZE];
+bool     mapseen[(MAPSIZE) * (MAPSIZE)];
 #endif
 
 //
@@ -947,8 +947,8 @@ void ContinueMusic (int offs)
 #define WHITETICS       6
 
 
-SDL_Color redshifts[NUMREDSHIFTS][256];
-SDL_Color whiteshifts[NUMWHITESHIFTS][256];
+SDL_Color redshifts[(NUMREDSHIFTS) * (256)];
+SDL_Color whiteshifts[(NUMWHITESHIFTS) * (256)];
 
 int damagecount, bonuscount;
 boolean palshifted;
@@ -972,7 +972,7 @@ void InitRedShifts (void)
 //
     for (i = 1; i <= NUMREDSHIFTS; i++)
     {
-        workptr = redshifts[i - 1];
+        workptr = (&redshifts[(i - 1)*(256)]);
         baseptr = gamepal;
 
         for (j = 0; j <= 255; j++)
@@ -991,7 +991,7 @@ void InitRedShifts (void)
 
     for (i = 1; i <= NUMWHITESHIFTS; i++)
     {
-        workptr = whiteshifts[i - 1];
+        workptr = (&whiteshifts[(i - 1)*(256)]);
         baseptr = gamepal;
 
         for (j = 0; j <= 255; j++)
@@ -1093,12 +1093,12 @@ void UpdatePaletteShifts (void)
 
     if (red)
     {
-        VL_SetPalette (redshifts[red - 1], false);
+        VL_SetPalette ((&redshifts[(red - 1)*(256)]), false);
         palshifted = true;
     }
     else if (white)
     {
-        VL_SetPalette (whiteshifts[white - 1], false);
+        VL_SetPalette ((&whiteshifts[(white - 1)*(256)]), false);
         palshifted = true;
     }
     else if (palshifted)
@@ -1154,7 +1154,7 @@ void DoActor (objtype * ob)
         return;
 
     if (!(ob->flags & (FL_NONMARK | FL_NEVERMARK)))
-        actorat[ob->tilex][ob->tiley] = NULL;
+        actorat[(ob->tilex)*(MAPSIZE)+(ob->tiley)] = NULL;
 
 //
 // non transitional object
@@ -1176,10 +1176,10 @@ void DoActor (objtype * ob)
         if (ob->flags & FL_NEVERMARK)
             return;
 
-        if ((ob->flags & FL_NONMARK) && actorat[ob->tilex][ob->tiley])
+        if ((ob->flags & FL_NONMARK) && actorat[(ob->tilex)*(MAPSIZE)+(ob->tiley)])
             return;
 
-        actorat[ob->tilex][ob->tiley] = ob;
+        actorat[(ob->tilex)*(MAPSIZE)+(ob->tiley)] = ob;
         return;
     }
 
@@ -1234,10 +1234,10 @@ void DoActor (objtype * ob)
     if (ob->flags & FL_NEVERMARK)
         return;
 
-    if ((ob->flags & FL_NONMARK) && actorat[ob->tilex][ob->tiley])
+    if ((ob->flags & FL_NONMARK) && actorat[(ob->tilex)*(MAPSIZE)+(ob->tiley)])
         return;
 
-    actorat[ob->tilex][ob->tiley] = ob;
+    actorat[(ob->tilex)*(MAPSIZE)+(ob->tiley)] = ob;
 }
 
 //==========================================================================

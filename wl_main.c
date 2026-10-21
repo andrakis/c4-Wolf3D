@@ -97,6 +97,11 @@ int     param_samplerate = 44100;
 int     param_mission = 0;
 boolean param_goodtimes = false;
 boolean param_ignorenumchunks = false;
+int     param_timedemo = 0;            // c4sdl: how many demos --timedemo plays
+extern int c4sdl_timedemo;
+extern unsigned int c4sdl_frames, c4sdl_sum;
+void WolfData(void);
+unsigned int plat_ticks(void);
 
 /*
 =============================================================================
@@ -398,7 +403,7 @@ boolean SaveTheGame (FILE *file, int x, int y)
     {
         for (j = 0; j < mapheight; j++)
         {
-            ob = actorat[i][j];
+            ob = actorat[(i)*(MAPSIZE)+(j)];
 
             if (ISPOINTER(ob))
                 actnum = 0x8000 | (word)(ob - objlist);
@@ -530,9 +535,9 @@ boolean LoadTheGame (FILE *file, int x, int y)
             checksum = DoChecksum(&actnum,sizeof(word),checksum);
 
             if (actnum & 0x8000)
-                actorat[i][j] = &objlist[actnum & 0x7fff];
+                actorat[(i)*(MAPSIZE)+(j)] = &objlist[actnum & 0x7fff];
             else
-                actorat[i][j] = (objtype *)(uintptr_t)actnum;
+                actorat[(i)*(MAPSIZE)+(j)] = (objtype *)(uintptr_t)actnum;
         }
     }
 
@@ -612,7 +617,7 @@ boolean LoadTheGame (FILE *file, int x, int y)
             {
                 tile = *map;
 
-                if (MAPSPOT(x,y,1) == PUSHABLETILE && !tilemap[x][y] && !VALIDAREA(tile))
+                if (MAPSPOT(x,y,1) == PUSHABLETILE && !tilemap[(x)*(MAPSIZE)+(y)] && !VALIDAREA(tile))
                 {
                     if (VALIDAREA(*(map + 1)))
                         tile = *(map + 1);
@@ -703,10 +708,14 @@ void ShutdownId (void)
 ==================
 */
 
-const float radtoint = (float)(FINEANGLES/2/PI);
+static float radtoint;          // c4sdl: (float)(FINEANGLES/2/PI), set below
 
 void BuildTables (void)
 {
+    // c4sdl: c4lc takes only integer constants in a global's initializer
+    radtoint = (float)(FINEANGLES/2/PI);
+    costable = sintable+(ANGLES/4);
+
     //
     // calculate fine tangents
     //
@@ -1585,16 +1594,43 @@ static void DemoLoop()
 
 #define IFARG(str) if(!strcmp(arg, (str)))
 
-void CheckParameters(int argc, char *argv[])
+/*
+==========================
+=
+= TimeDemo
+=
+= c4sdl: play the first param_timedemo demos in virtual time, and print
+= each one's frames and the checksum of all of them so far: the gcc
+= and c4lc builds must print the same.
+=
+==========================
+*/
+
+static void TimeDemo (void)
 {
-    const char *header =
+    int i;
+    unsigned before;
+    uint32_t t0;
+
+    for (i = 0; i < param_timedemo; i++)
     {
+        before = c4sdl_frames;
+        t0 = plat_ticks();
+        PlayDemo (i);
+        printf ("timedemo: demo %d: %u frames, checksum %08x, %u ms\n", i,
+            c4sdl_frames - before, c4sdl_sum, plat_ticks() - t0);
+    }
+    exit (0);
+}
+
+void CheckParameters(int argc, char **argv)
+{
+    const char *header =            // c4sdl: no braces, for c4lc
         "Wolf4SDL v2.0\n"
         "Ported by Chaos-Software, additions by the community\n"
         "Original Wolfenstein 3D by id Software\n"
         "Usage: Wolf4SDL [options]\n"
-        "See Options.txt for help\n\n"
-    };
+        "See Options.txt for help\n\n";
 
     int    i;
     size_t len;
@@ -1753,6 +1789,14 @@ void CheckParameters(int argc, char *argv[])
             param_goodtimes = true;
         else IFARG("--ignorenumchunks")
             param_ignorenumchunks = true;
+        else IFARG("--timedemo")
+        {
+            // c4sdl: play the demos in virtual time, then report
+            c4sdl_timedemo = getenv("WOLF_FRAMES") ? 2 : 1;
+            param_timedemo = 4;
+            if (i + 1 < argc && argv[i + 1][0] >= '1' && argv[i + 1][0] <= '4')
+                param_timedemo = atoi(argv[++i]);
+        }
         else
             snprintf (error,sizeof(error),"Invalid parameter(s)!");
     }
@@ -1780,7 +1824,7 @@ void CheckParameters(int argc, char *argv[])
 ==========================
 */
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
 #if defined(_arch_dreamcast)
     DC_Init();
@@ -1788,9 +1832,19 @@ int main (int argc, char *argv[])
     CheckParameters(argc, argv);
 #endif
 
+#ifdef C4IX
+    WolfData();                 // c4sdl: find the game, unpacking it the first time
+#endif
+    MenuCounts();               // c4sdl
     CheckForEpisodes();
 
+    if (param_timedemo)
+        param_nowait = true;
+
     InitGame();
+
+    if (param_timedemo)
+        TimeDemo();
 
     DemoLoop();
 

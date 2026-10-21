@@ -13,7 +13,7 @@ Id Software Caching Manager
 #include <sys/types.h>
 #if defined _WIN32
     #include <io.h>
-#elif defined _arch_dreamcast
+#elif defined _arch_dreamcast || defined C4IX
     #include <unistd.h>
 #else
     #include <sys/uio.h>
@@ -453,7 +453,17 @@ void CAL_SetupGrFile (void)
     if (!file)
         CA_CannotOpen (fname);
 
-    fread (grhuffman,sizeof(grhuffman),1,file);
+    {
+        // c4sdl: as the file has them, two words a node (C4_W16, wl_def.h)
+        byte nodes[255 * 4];
+        int n;
+        fread (nodes,sizeof(nodes),1,file);
+        for (n = 0; n < 255; n++)
+        {
+            grhuffman[n].bit0 = C4_W16(nodes + 4 * n);
+            grhuffman[n].bit1 = C4_W16(nodes + 4 * n + 2);
+        }
+    }
     fclose (file);
 
 //
@@ -479,7 +489,7 @@ void CAL_SetupGrFile (void)
             "(For mod developers: perhaps you forgot to update NUMCHUNKS?)",
             fname, headersize / 3, expectedsize);
 
-    byte data[lengthof(grstarts) * 3];
+    byte data[(NUMCHUNKS + 1) * 3];      // c4sdl: lengthof(grstarts), as c4lc can size it
     fread (data,sizeof(data),1,file);
     fclose (file);
 
@@ -509,7 +519,19 @@ void CAL_SetupGrFile (void)
     CAL_GetGrChunkLength (file,STRUCTPIC);                // position file pointer
     compseg = SafeMalloc(chunkcomplen);
     fread (compseg,chunkcomplen,1,file);
-    CAL_HuffExpand(compseg, (byte*)pictable, NUMPICS * sizeof(*pictable), grhuffman);
+    {
+        // c4sdl: two words a picture in the file; a struct's members
+        // need not be packed as tightly
+        byte *packed = SafeMalloc(NUMPICS * 4);
+        int n;
+        CAL_HuffExpand(compseg, packed, NUMPICS * 4, grhuffman);
+        for (n = 0; n < NUMPICS; n++)
+        {
+            pictable[n].width = (int16_t) C4_W16(packed + 4 * n);
+            pictable[n].height = (int16_t) C4_W16(packed + 4 * n + 2);
+        }
+        free(packed);
+    }
     free(compseg);
 
     CA_CacheGrChunks (file);
@@ -547,7 +569,19 @@ void CAL_SetupMapFile (void)
 
     tinf = SafeMalloc(sizeof(*tinf));
 
-    fread (tinf,sizeof(*tinf),1,file);
+    {
+        // c4sdl: field by field, as the file packs them
+        byte head[2 + (MAPPLANES >= 4 ? 2 : 0) + 4 * NUMMAPS];
+        byte *p = head;
+        int n;
+        fread (head,sizeof(head),1,file);
+        tinf->RLEWtag = C4_W16(p); p += 2;
+#if MAPPLANES >= 4
+        tinf->numplanes = C4_W16(p); p += 2;
+#endif
+        for (n = 0; n < NUMMAPS; n++, p += 4)
+            tinf->headeroffsets[n] = C4_W32(p);
+    }
     fclose (file);
 
 //
@@ -572,7 +606,21 @@ void CAL_SetupMapFile (void)
         mapheaderseg[i] = SafeMalloc(sizeof(*mapheaderseg[i]));
 
         fseek (file,pos,SEEK_SET);
-        fread (mapheaderseg[i],sizeof(*mapheaderseg[i]),1,file);
+        {
+            // c4sdl: field by field, as the file packs them
+            byte head[MAPPLANES * 6 + 4 + 16];
+            maptype *m = mapheaderseg[i];
+            int n;
+            fread (head,sizeof(head),1,file);
+            for (n = 0; n < MAPPLANES; n++)
+            {
+                m->planestart[n] = C4_W32(head + 4 * n);
+                m->planelength[n] = C4_W16(head + 4 * MAPPLANES + 2 * n);
+            }
+            m->width = C4_W16(head + 6 * MAPPLANES);
+            m->height = C4_W16(head + 6 * MAPPLANES + 2);
+            memcpy (m->name, head + 6 * MAPPLANES + 4, 16);
+        }
     }
 
     fclose (file);

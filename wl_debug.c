@@ -164,7 +164,7 @@ void BasicOverhead (void)
     for (y = 0; y < mapheight; y++)
     {
         for (x = 0; x < mapwidth; x++)
-            VWB_Bar ((x * zoom) + offx,(y * zoom) + offy,zoom,zoom,(byte)(uintptr_t)actorat[x][y]);
+            VWB_Bar ((x * zoom) + offx,(y * zoom) + offy,zoom,zoom,(byte)(uintptr_t)actorat[(x)*(MAPSIZE)+(y)]);
     }
 
     //
@@ -176,13 +176,13 @@ void BasicOverhead (void)
     {
         for (x = 0; x < mapwidth; x++)
         {
-            tile = (uintptr_t)actorat[x][y];
+            tile = (uintptr_t)actorat[(x)*(MAPSIZE)+(y)];
 
             if (ISPOINTER(tile) && ((objtype *)tile)->flags & FL_SHOOTABLE)
                 color = 72;
             else if (!tile || ISPOINTER(tile))
             {
-                if (spotvis[x][y])
+                if (spotvis[(x)*(MAPSIZE)+(y)])
                     color = 111;
                 else
                     color = 0;      // nothing
@@ -500,7 +500,7 @@ int DebugKeys (void)
 
     if (Keyboard[sc_F])             // F = facing spot
     {
-        spot = actorat[player->tilex][player->tiley];
+        spot = actorat[(player->tilex)*(MAPSIZE)+(player->tiley)];
 
         CenterWindow (15,9);
         snprintf (str,sizeof(str),"X: %d (%d)\n",player->x,player->x % TILEGLOBAL);
@@ -513,7 +513,7 @@ int DebugKeys (void)
         US_Print (str);
         snprintf (str,sizeof(str),"TileY: %u\n",player->tiley);
         US_Print (str);
-        snprintf (str,sizeof(str),"1: %u",tilemap[player->tilex][player->tiley]);
+        snprintf (str,sizeof(str),"1: %u",tilemap[(player->tilex)*(MAPSIZE)+(player->tiley)]);
         US_Print (str);
         snprintf (str,sizeof(str)," 2:%.8X\n",(uintptr_t)spot);
         US_Print (str);
@@ -521,7 +521,7 @@ int DebugKeys (void)
         US_Print (str);
         snprintf (str,sizeof(str)," 2: %u",MAPSPOT(player->tilex,player->tiley,1));
         US_Print (str);
-        snprintf (str,sizeof(str)," 3: %u",!ISPOINTER(spot) ? spotvis[player->tilex][player->tiley] : spot->flags);
+        snprintf (str,sizeof(str)," 3: %u",!ISPOINTER(spot) ? spotvis[(player->tilex)*(MAPSIZE)+(player->tiley)] : spot->flags);
         US_Print (str);
 
         VW_UpdateScreen();
@@ -905,12 +905,12 @@ void DrawMapSprite (int16_t sx, int16_t sy, int16_t shapenum)
     linesrc = PM_GetSpritePage(shapenum);
     shape = (compshape_t *)linesrc;
 
-    for (x = shape->leftpix; x <= shape->rightpix; x++)
+    for (x = SHAPE_LEFT(shape); x <= SHAPE_RIGHT(shape); x++)
     {
         //
         // reconstruct sprite and draw it
         //
-        linecmds = &linesrc[shape->dataofs[x - shape->leftpix]];
+        linecmds = &linesrc[SHAPE_OFS(shape, x - SHAPE_LEFT(shape))];
 
         for (end = ReadShort(linecmds) >> 1; end; end = ReadShort(linecmds) >> 1)
         {
@@ -987,13 +987,13 @@ void OverheadRefresh (void)
             sx = (x - maporgx) * tilesize;
             sy = (y - maporgy) * tilesize;
 #ifdef REVEALMAP
-            if (!mapseen[x][y] && !mapreveal)
+            if (!mapseen[(x)*(MAPSIZE)+(y)] && !mapreveal)
             {
                 DrawMapFloor (sx,sy,BLACK);
                 continue;
             }
 #endif
-            tile = (uintptr_t)actorat[x][y];
+            tile = (uintptr_t)actorat[(x)*(MAPSIZE)+(y)];
 
             if (tile)
             {
@@ -1020,7 +1020,7 @@ void OverheadRefresh (void)
                     {
                         obj = (objtype *)tile;
 
-                        if (spotvis[(byte)(obj->x >> TILESHIFT)][(byte)(obj->y >> TILESHIFT)])
+                        if (spotvis[((byte)(obj->x >> TILESHIFT))*(MAPSIZE)+((byte)(obj->y >> TILESHIFT))])
                         {
                             shapenum = obj->state->shapenum;
 

@@ -28,16 +28,11 @@
 //
 
 #include "wl_def.h"
-#include <SDL_mixer.h>
-#if defined(GP2X_940)
-#include "gp2x/fmopl.h"
-#else
-#ifdef USE_GPL
-#include "dosbox/dbopl.h"
-#else
-#include "mame/fmopl.h"
-#endif
-#endif
+#include "SDL_mixer.h"
+// c4sdl: the AdLib's three calls, which the port's platform provides
+int  YM3812Init(int num, int clock, int rate);
+void YM3812Write(int chip, int reg, int val);
+void YM3812UpdateOne(int chip, short *buf, int length);
 
 #define ORIGSAMPLERATE 7042
 
@@ -410,6 +405,11 @@ void SD_PrepareSound(int which)
 
     if(DigiList == NULL)
         Quit("SD_PrepareSound(%i): DigiList not initialized!\n", which);
+
+    // c4sdl: with no audio device there is nothing to convert them for,
+    // and converting every sound in floating point takes seconds
+    if (!SD_Started)
+        return;
 
     int page = DigiList[which].startpage;
     int size = DigiList[which].length;
@@ -900,6 +900,9 @@ SD_Startup(void)
     {
         snprintf (str,sizeof(str),"Unable to open audio device: %s\n", Mix_GetError());
         Error (str);
+        // c4sdl: silent, but the digitized sounds are still listed, as
+        // InitDigiMap expects
+        SDL_SetupDigi();
         return;
     }
 

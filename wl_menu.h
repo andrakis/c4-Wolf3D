@@ -131,6 +131,7 @@ void SetupControlPanel(void);
 void SetupSaveGames();
 void CleanupControlPanel(void);
 
+void MenuCounts(void);           // c4sdl: each menu's amount
 void DrawMenu(CP_iteminfo *item_i,CP_itemtype *items);
 int  HandleMenu(CP_iteminfo *item_i,
                 CP_itemtype *items,

@@ -32,17 +32,20 @@
 ===================
 */
 
-void ScaleLine (int16_t x, int16_t toppix, fixed fracstep, byte *linesrc, byte *linecmds, byte *curshades)
+// c4sdl: ints, not int16_t, in the scalers: a short is two byte loads and a
+// sign extension to c4lc, and these are the innermost loops of the game
+void ScaleLine (int x, int toppix, fixed fracstep, byte *linesrc, byte *linecmds, byte *curshades)
 {
     byte    *src,*dest;
     byte    col;
-    int16_t start,end,top;
-    int16_t startpix,endpix;
+    int start,end,top;
+    int startpix,endpix;
     fixed   frac;
+    int     pitch = bufferPitch, vh = viewheight;      // c4sdl: locals in the loops
 
     for (end = ReadShort(linecmds) >> 1; end; end = ReadShort(linecmds) >> 1)
     {
-        top = ReadShort(linecmds + 2);
+        top = (int16_t) ReadShort(linecmds + 2);   // c4sdl: an offset that may be negative
         start = ReadShort(linecmds + 4) >> 1;
 
         frac = start * fracstep;
@@ -53,7 +56,7 @@ void ScaleLine (int16_t x, int16_t toppix, fixed fracstep, byte *linesrc, byte *
         {
             startpix = endpix;
 
-            if (startpix >= viewheight)
+            if (startpix >= vh)
                 break;                          // off the bottom of the view area
 
             frac += fracstep;
@@ -65,8 +68,8 @@ void ScaleLine (int16_t x, int16_t toppix, fixed fracstep, byte *linesrc, byte *
             if (startpix < 0)
                 startpix = 0;                   // clip upper boundary
 
-            if (endpix > viewheight)
-                endpix = viewheight;            // clip lower boundary
+            if (endpix > vh)
+                endpix = vh;                    // clip lower boundary
 
 #ifdef USE_SHADING
             if (curshades)
@@ -80,7 +83,7 @@ void ScaleLine (int16_t x, int16_t toppix, fixed fracstep, byte *linesrc, byte *
             while (startpix < endpix)
             {
                 *dest = col;
-                dest += bufferPitch;
+                dest += pitch;
                 startpix++;
             }
         }
@@ -106,8 +109,8 @@ void ScaleShape (int xcenter, int shapenum, int height, uint32_t flags)
     compshape_t *shape;
     byte        *linesrc,*linecmds;
     byte        *curshades = NULL;
-    int16_t     scale,toppix;
-    int16_t     x1,x2,actx;
+    int         scale,toppix;
+    int         x1,x2,actx;
     fixed       frac,fracstep;
 
     scale = height >> 3;        // low three bits are fractional
@@ -120,20 +123,20 @@ void ScaleShape (int xcenter, int shapenum, int height, uint32_t flags)
 
 #ifdef USE_SHADING
     if (flags & FL_FULLBRIGHT)
-        curshades = shadetable[0];
+        curshades = (&shadetable[(0)*(256)]);
     else
-        curshades = shadetable[GetShade(height)];
+        curshades = (&shadetable[(GetShade(height))*(256)]);
 #endif
 
     fracstep = FixedDiv(scale,TEXTURESIZE/2);
-    frac = shape->leftpix * fracstep;
+    frac = SHAPE_LEFT(shape) * fracstep;
 
     actx = xcenter - scale;
     toppix = centery - scale;
 
     x2 = (frac >> FRACBITS) + actx;
 
-    for (i = shape->leftpix; i <= shape->rightpix; i++)
+    for (i = SHAPE_LEFT(shape); i <= SHAPE_RIGHT(shape); i++)
     {
         //
         // calculate edges of the shape
@@ -159,7 +162,7 @@ void ScaleShape (int xcenter, int shapenum, int height, uint32_t flags)
         {
             if (wallheight[x1] < height)
             {
-                linecmds = &linesrc[shape->dataofs[i - shape->leftpix]];
+                linecmds = &linesrc[SHAPE_OFS(shape, i - SHAPE_LEFT(shape))];
 
                 ScaleLine (x1,toppix,fracstep,linesrc,linecmds,curshades);
             }
@@ -187,8 +190,8 @@ void SimpleScaleShape (int xcenter, int shapenum, int height)
     int         i;
     compshape_t *shape;
     byte        *linesrc,*linecmds;
-    int16_t     scale,toppix;
-    int16_t     x1,x2,actx;
+    int         scale,toppix;
+    int         x1,x2,actx;
     fixed       frac,fracstep;
 
     scale = height >> 1;
@@ -197,14 +200,14 @@ void SimpleScaleShape (int xcenter, int shapenum, int height)
     shape = (compshape_t *)linesrc;
 
     fracstep = FixedDiv(scale,TEXTURESIZE/2);
-    frac = shape->leftpix * fracstep;
+    frac = SHAPE_LEFT(shape) * fracstep;
 
     actx = xcenter - scale;
     toppix = centery - scale;
 
     x2 = (frac >> FRACBITS) + actx;
 
-    for (i = shape->leftpix; i <= shape->rightpix; i++)
+    for (i = SHAPE_LEFT(shape); i <= SHAPE_RIGHT(shape); i++)
     {
         //
         // calculate edges of the shape
@@ -216,7 +219,7 @@ void SimpleScaleShape (int xcenter, int shapenum, int height)
 
         while (x1 < x2)
         {
-            linecmds = &linesrc[shape->dataofs[i - shape->leftpix]];
+            linecmds = &linesrc[SHAPE_OFS(shape, i - SHAPE_LEFT(shape))];
 
             ScaleLine (x1,toppix,fracstep,linesrc,linecmds,NULL);
 
@@ -254,7 +257,7 @@ void Scale3DShape (visobj_t *sprite, int x1, int x2, fixed ny1, fixed ny2, fixed
     linesrc = PM_GetSpritePage(sprite->shapenum);
     shape = (compshape_t *)linesrc;
 
-    len = shape->rightpix - shape->leftpix + 1;
+    len = SHAPE_RIGHT(shape) - SHAPE_LEFT(shape) + 1;
 
     if (!len)
         return;
@@ -269,8 +272,8 @@ void Scale3DShape (visobj_t *sprite, int x1, int x2, fixed ny1, fixed ny2, fixed
     dza = -(dzz >> 1);
     dxx >>= TEXTURESHIFT;
     dzz >>= TEXTURESHIFT;
-    dxa += shape->leftpix * dxx;
-    dza += shape->leftpix * dzz;
+    dxa += SHAPE_LEFT(shape) * dxx;
+    dza += SHAPE_LEFT(shape) * dzz;
 
     xpos[0] = (ny1 + (dxa >> 8)) * scale / (nx1 + (dza >> 8)) + centerx;
     height1 = heightnumerator / ((nx1 + (dza >> 8)) >> 8);
@@ -316,14 +319,14 @@ void Scale3DShape (visobj_t *sprite, int x1, int x2, fixed ny1, fixed ny2, fixed
             {
 #ifdef USE_SHADING
                 if (sprite->flags & FL_FULLBRIGHT)
-                    curshades = shadetable[0];
+                    curshades = (&shadetable[(0)*(256)]);
                 else
-                    curshades = shadetable[GetShade(scale1 << 3)];
+                    curshades = (&shadetable[(GetShade(scale1 << 3))*(256)]);
 #endif
                 fracstep = FixedDiv(scale1,TEXTURESIZE/2);
                 toppix = centery - scale1;
 
-                linecmds = &linesrc[shape->dataofs[i]];
+                linecmds = &linesrc[SHAPE_OFS(shape, i)];
 
                 ScaleLine (slinex,toppix,fracstep,linesrc,linecmds,curshades);
             }

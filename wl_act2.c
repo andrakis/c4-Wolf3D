@@ -34,12 +34,12 @@
 =============================================================================
 */
 
-short starthitpoints[4][NUMENEMIES] =
+short starthitpoints[(4) * (NUMENEMIES)] =
 //
 // BABY MODE
 //
 {
-    {
+    
         25,   // guards
         50,   // officer
         100,  // SS
@@ -63,11 +63,11 @@ short starthitpoints[4][NUMENEMIES] =
         1050, // en_uber,
         950,  // en_will,
         1250  // en_death
-    },
+    ,
     //
     // DON'T HURT ME MODE
     //
-    {
+    
         25,   // guards
         50,   // officer
         100,  // SS
@@ -91,11 +91,11 @@ short starthitpoints[4][NUMENEMIES] =
         1150, // en_uber,
         1050, // en_will,
         1350  // en_death
-    },
+    ,
     //
     // BRING 'EM ON MODE
     //
-    {
+    
         25,   // guards
         50,   // officer
         100,  // SS
@@ -121,11 +121,11 @@ short starthitpoints[4][NUMENEMIES] =
         1250, // en_uber,
         1150, // en_will,
         1450  // en_death
-    },
+    ,
     //
     // DEATH INCARNATE MODE
     //
-    {
+    
         25,   // guards
         50,   // officer
         100,  // SS
@@ -151,7 +151,7 @@ short starthitpoints[4][NUMENEMIES] =
         1400, // en_uber,
         1300, // en_will,
         1600  // en_death
-    }
+    
 };
 
 void    A_StartDeathCam (objtype *ob);
@@ -279,7 +279,7 @@ boolean ProjectileTryMove (objtype *ob)
     for (y=yl;y<=yh;y++)
         for (x=xl;x<=xh;x++)
         {
-            check = actorat[x][y];
+            check = actorat[(x)*(MAPSIZE)+(y)];
             if (check && !ISPOINTER(check))
                 return false;
         }
@@ -899,7 +899,7 @@ void SpawnStand (int which, int tilex, int tiley, int dir)
     }
 
     newobj->obclass = guardobj + which;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][which];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(which)];
     newobj->dir = dir * 2;
     newobj->flags |= FL_SHOOTABLE;
 }
@@ -945,7 +945,7 @@ void SpawnBoss (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = bossobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_boss];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_boss)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -968,7 +968,7 @@ void SpawnGretel (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = gretelobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_gretel];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_gretel)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -1028,12 +1028,12 @@ void SpawnPatrol (int which, int tilex, int tiley, int dir)
 
     newobj->obclass = guardobj+which;
     newobj->dir = dir*2;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][which];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(which)];
     newobj->distance = TILEGLOBAL;
     newobj->flags |= FL_SHOOTABLE;
     newobj->active = ac_yes;
 
-    actorat[newobj->tilex][newobj->tiley] = NULL;           // don't use original spot
+    actorat[(newobj->tilex)*(MAPSIZE)+(newobj->tiley)] = NULL;           // don't use original spot
 
     switch (dir)
     {
@@ -1051,7 +1051,7 @@ void SpawnPatrol (int which, int tilex, int tiley, int dir)
             break;
     }
 
-    actorat[newobj->tilex][newobj->tiley] = newobj;
+    actorat[(newobj->tilex)*(MAPSIZE)+(newobj->tiley)] = newobj;
 }
 
 
@@ -1262,7 +1262,7 @@ void SpawnTrans (int tilex, int tiley)
 
     newobj = SpawnNewObj(tilex,tiley,&s_transstand);
     newobj->obclass = transobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_trans];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_trans)];
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
         gamestate.killtotal++;
@@ -1343,7 +1343,7 @@ void SpawnUber (int tilex, int tiley)
 
     newobj = SpawnNewObj(tilex,tiley,&s_uberstand);
     newobj->obclass = uberobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_uber];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_uber)];
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
         gamestate.killtotal++;
@@ -1442,7 +1442,7 @@ void SpawnWill (int tilex, int tiley)
 
     newobj = SpawnNewObj(tilex,tiley,&s_willstand);
     newobj->obclass = willobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_will];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_will)];
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
         gamestate.killtotal++;
@@ -1621,7 +1621,7 @@ void SpawnDeath (int tilex, int tiley)
 
     newobj = SpawnNewObj(tilex,tiley,&s_deathstand);
     newobj->obclass = deathobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_death];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_death)];
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
         gamestate.killtotal++;
@@ -1813,7 +1813,7 @@ void SpawnAngel (int tilex, int tiley)
 
     newobj = SpawnNewObj(tilex,tiley,&s_angelstand);
     newobj->obclass = angelobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_angel];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_angel)];
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
         gamestate.killtotal++;
@@ -1927,7 +1927,7 @@ void SpawnSpectre (int tilex, int tiley)
 
     newobj = SpawnNewObj(tilex,tiley,&s_spectrewait1);
     newobj->obclass = spectreobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_spectre];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_spectre)];
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH|FL_BONUS;
     if (!loadedgame)
         gamestate.killtotal++;
@@ -1963,7 +1963,7 @@ void A_Dormant (objtype *ob)
     for (y=yl ; y<=yh ; y++)
         for (x=xl ; x<=xh ; x++)
         {
-            tile = (uintptr_t)actorat[x][y];
+            tile = (uintptr_t)actorat[(x)*(MAPSIZE)+(y)];
             if (!tile)
                 continue;
             if (!ISPOINTER(tile))
@@ -2233,7 +2233,7 @@ void SpawnSchabbs (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = schabbobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_schabbs];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_schabbs)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -2262,7 +2262,7 @@ void SpawnGift (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = giftobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_gift];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_gift)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -2291,7 +2291,7 @@ void SpawnFat (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = fatobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_fat];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_fat)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -2846,7 +2846,7 @@ void SpawnFakeHitler (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = fakeobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_fake];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_fake)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -2875,7 +2875,7 @@ void SpawnHitler (int tilex, int tiley)
     newobj->speed = SPDPATROL;
 
     newobj->obclass = mechahitlerobj;
-    newobj->hitpoints = starthitpoints[gamestate.difficulty][en_hitler];
+    newobj->hitpoints = starthitpoints[(gamestate.difficulty)*(NUMENEMIES)+(en_hitler)];
     newobj->dir = nodir;
     newobj->flags |= FL_SHOOTABLE|FL_AMBUSH;
     if (!loadedgame)
@@ -3783,7 +3783,7 @@ boolean CheckPosition (objtype *ob)
     {
         for (x=xl;x<=xh;x++)
         {
-            check = actorat[x][y];
+            check = actorat[(x)*(MAPSIZE)+(y)];
             if (check && !ISPOINTER(check))
                 return false;
         }

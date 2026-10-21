@@ -64,34 +64,34 @@ extern	HighScore	Scores[MaxScores];
 
 void            US_Startup(void);
 void            US_Shutdown(void);
-void			US_TextScreen(void),
-				US_UpdateTextScreen(void),
-				US_FinishTextScreen(void);
+void			US_TextScreen(void);
+void			US_UpdateTextScreen(void);
+void			US_FinishTextScreen(void);
 void			US_DrawWindow(word x,word y,word w,word h);
 void			US_CenterWindow(word,word);
-void			US_SaveWindow(WindowRec *win),
-				US_RestoreWindow(WindowRec *win);
+void			US_SaveWindow(WindowRec *win);
+void			US_RestoreWindow(WindowRec *win);
 void 			US_ClearWindow(void);
 void			US_SetPrintRoutines(void (*measure)(const char *,word *,word *),
 									void (*print)(const char *));
-void			US_PrintCentered(const char *s),
-				US_CPrint(const char *s),
-				US_CPrintLine(const char *s),
-				US_Print(const char *s);
+void			US_PrintCentered(const char *s);
+void			US_CPrint(const char *s);
+void			US_CPrintLine(const char *s);
+void			US_Print(const char *s);
 void			US_Printf(const char *formatStr, ...);
 void			US_CPrintf(const char *formatStr, ...);
 
 void			US_PrintUnsigned(longword n);
 void			US_PrintSigned(int32_t n);
-void			US_StartCursor(void),
-				US_ShutCursor(void);
+void			US_StartCursor(void);
+void			US_ShutCursor(void);
 void			US_CheckHighScore(int32_t score,word other);
 void			US_DisplayHighScores(int which);
 extern	boolean	US_UpdateCursor(void);
 boolean         US_LineInput(int x,int y,char *buf,const char *def,boolean escok,
                              int maxchars,int maxwidth);
 
-void	        USL_PrintInCenter(const char *s,Rect r);
+void	        USL_PrintInCenter(const char *s,Rect *r);   // c4sdl: by pointer
 char 	        *USL_GiveSaveName(word game);
 
 void            US_InitRndT(int randomize);

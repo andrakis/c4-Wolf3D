@@ -35,7 +35,7 @@ void SetTextColor (CP_itemtype *items, int hlight);
 #endif
 
 // ENDSTRx constants are defined in foreign.h
-char endStrings[9][80] = {
+char *endStrings[9] = {
     ENDSTR1,
     ENDSTR2,
     ENDSTR3,
@@ -239,15 +239,30 @@ CP_itemtype CusMenu[] = {
 };
 
 // CP_iteminfo struct format: short x, y, amount, curpos, indent;
-CP_iteminfo MainItems = { MENU_X, MENU_Y, lengthof(MainMenu), STARTITEM, 24 },
-            SndItems  = { SM_X, SM_Y1, lengthof(SndMenu), 0, 52 },
-            LSItems   = { LSM_X, LSM_Y, lengthof(LSMenu), 0, 24 },
-            CtlItems  = { CTL_X, CTL_Y, lengthof(CtlMenu), -1, 56 },
-            CusItems  = { 8, CST_Y + 13 * 2, lengthof(CusMenu), -1, 0},
+// c4sdl: the amounts are lengthof() each menu, which c4lc cannot put
+// in an initializer; MenuCounts sets them
+CP_iteminfo MainItems = { MENU_X, MENU_Y, 0, STARTITEM, 24 },
+            SndItems  = { SM_X, SM_Y1, 0, 0, 52 },
+            LSItems   = { LSM_X, LSM_Y, 0, 0, 24 },
+            CtlItems  = { CTL_X, CTL_Y, 0, -1, 56 },
+            CusItems  = { 8, CST_Y + 13 * 2, 0, -1, 0},
 #ifndef SPEAR
-            NewEitems = { NE_X, NE_Y, lengthof(NewEmenu), 0, 88 },
+            NewEitems = { NE_X, NE_Y, 0, 0, 88 },
 #endif
-            NewItems  = { NM_X, NM_Y, lengthof(NewMenu), 2, 24 };
+            NewItems  = { NM_X, NM_Y, 0, 2, 24 };
+
+void MenuCounts (void)
+{
+    MainItems.amount = lengthof(MainMenu);
+    SndItems.amount = lengthof(SndMenu);
+    LSItems.amount = lengthof(LSMenu);
+    CtlItems.amount = lengthof(CtlMenu);
+    CusItems.amount = lengthof(CusMenu);
+#ifndef SPEAR
+    NewEitems.amount = lengthof(NewEmenu);
+#endif
+    NewItems.amount = lengthof(NewMenu);
+}
 
 int color_hlite[] = {
     DEACTIVE,
@@ -270,7 +285,7 @@ static int SaveGamesAvail[10];
 static int StartGame;
 static int SoundStatus = 1;
 static int pickquick;
-static char SaveGameNames[10][MaxGameName];
+static char SaveGameNames[(10) * (MaxGameName)];
 static char SaveName[13] = "savegam?.";
 
 
@@ -727,7 +742,7 @@ CP_CheckQuick (ScanCode scancode)
 
                 fontnumber = 1;
 
-                snprintf (str,sizeof(str),STR_LGC "%s\"?",SaveGameNames[LSItems.curpos]);
+                snprintf (str,sizeof(str),STR_LGC "%s\"?",(&SaveGameNames[(LSItems.curpos)*(MaxGameName)]));
 
                 if (Confirm (string))
                     CP_LoadGame (1);
@@ -1485,7 +1500,7 @@ PrintLSEntry (int w, int color)
     fontnumber = 0;
 
     if (SaveGamesAvail[w])
-        US_Print (SaveGameNames[w]);
+        US_Print ((&SaveGameNames[(w)*(MaxGameName)]));
     else
         US_Print ("      - " STR_EMPTY " -");
 
@@ -1528,7 +1543,7 @@ CP_SaveGame (int quick)
             unlink (savepath);
             file = fopen (savepath, "wb");
 
-            snprintf (input,sizeof(input),"%s",SaveGameNames[which]);
+            snprintf (input,sizeof(input),"%s",(&SaveGameNames[(which)*(MaxGameName)]));
 
             fwrite (input, 1, 32, file);
             fseek (file, 32, SEEK_SET);
@@ -1574,7 +1589,7 @@ CP_SaveGame (int quick)
 
             ShootSnd ();
 
-            snprintf (input,sizeof(input),"%s",SaveGameNames[which]);
+            snprintf (input,sizeof(input),"%s",(&SaveGameNames[(which)*(MaxGameName)]));
             name[7] = which + '0';
 
             fontnumber = 0;
@@ -1588,7 +1603,7 @@ CP_SaveGame (int quick)
                  LSM_W - LSItems.indent - 30))
             {
                 SaveGamesAvail[which] = 1;
-                snprintf (SaveGameNames[which],sizeof(SaveGameNames[which]),"%s",input);
+                snprintf ((&SaveGameNames[(which)*(MaxGameName)]),MaxGameName,"%s",input);
 
                 if (configdir[0])
                     snprintf (savepath, sizeof(savepath), "%s/%s", configdir, name);
@@ -1883,7 +1898,7 @@ DrawCtlScreen (void)
 ////////////////////////////////////////////////////////////////////
 enum
 { FIRE, STRAFE, RUN, OPEN };
-char mbarray[4][3] = { "b0", "b1", "b2", "b3" };
+char *mbarray[4] = { "b0", "b1", "b2", "b3" };
 int8_t order[4] = { RUN, OPEN, FIRE, STRAFE };
 
 
@@ -2948,7 +2963,7 @@ void SetupSaveGames()
             if (file)
             {
                 SaveGamesAvail[i] = 1;
-                fread (SaveGameNames[i],MaxGameName,1,file);
+                fread ((&SaveGameNames[(i)*(MaxGameName)]),MaxGameName,1,file);
                 fclose (file);
             }
 #ifdef _arch_dreamcast
@@ -3595,7 +3610,7 @@ Message (const char *string)
 
     fontnumber = 1;
     font = (fontstruct *) grsegs[STARTFONT + fontnumber];
-    h = font->height;
+    h = FONT_HEIGHT(font);
     for (i = 0; i < len; i++)
     {
         if (string[i] == '\n')
@@ -3603,10 +3618,10 @@ Message (const char *string)
             if (w > mw)
                 mw = w;
             w = 0;
-            h += font->height;
+            h += FONT_HEIGHT(font);
         }
         else
-            w += font->width[(byte)string[i]];
+            w += FONT_WIDTH(font, (byte)string[i]);
     }
 
     if (w + 10 > mw)
@@ -3742,7 +3757,8 @@ CheckForEpisodes (void)
     struct stat statbuf;
 
     // On Linux like systems, the configdir defaults to $HOME/.wolf4sdl
-#if !defined(_WIN32) && !defined(_arch_dreamcast)
+    // (c4sdl: on C4IX, as on DOS, it is the game's own directory)
+#if !defined(_WIN32) && !defined(_arch_dreamcast) && !defined(C4IX)
     if(configdir[0] == 0)
     {
         // Set config location to home directory for multi-user support

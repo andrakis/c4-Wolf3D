@@ -132,20 +132,20 @@ extern  int             DigiChannel[];
 // Function prototypes
 void            Delay (int32_t wolfticks);
 
-extern  void    SD_Startup(void),
-                SD_Shutdown(void);
+extern  void    SD_Startup(void);
+extern  void    SD_Shutdown(void);
 
 extern  int     SD_GetChannelForDigi(int which);
 extern  void    SD_PositionSound(int leftvol,int rightvol);
 extern  boolean SD_PlaySound (int sound);
 extern  void    SD_SetPosition(int channel, int leftvol,int rightvol);
-extern  void    SD_StopSound(void),
-                SD_WaitSoundDone(void);
+extern  void    SD_StopSound(void);
+extern  void    SD_WaitSoundDone(void);
 
 extern  void    SD_StartMusic(int chunk);
 extern  void    SD_ContinueMusic(int chunk, int startoffs);
-extern  void    SD_MusicOn(void),
-                SD_FadeOutMusic(void);
+extern  void    SD_MusicOn(void);
+extern  void    SD_FadeOutMusic(void);
 extern  int     SD_MusicOff(void);
 
 extern  boolean SD_MusicPlaying(void);

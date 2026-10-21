@@ -26,9 +26,15 @@ void *safe_malloc (size_t size, const char *fname, uint32_t line)
 }
 
 
+// c4sdl: in 32-bit pieces. ((int64_t)a * b + 0x8000) >> 16, to its low 32
+// bits, is the sum below: a = ah * 2^16 + al, with ah = a >> 16 (arithmetic)
+// and al = a & 0xffff, and likewise b. c4lc does int64_t at 32 bits in
+// helper calls, and this is the hottest multiply in the game.
 fixed FixedMul (fixed a, fixed b)
 {
-	return (fixed)(((int64_t)a * b + 0x8000) >> FRACBITS);
+    uint32_t ah = (uint32_t)(a >> 16), al = (uint32_t)a & 0xffff;
+    uint32_t bh = (uint32_t)(b >> 16), bl = (uint32_t)b & 0xffff;
+    return (fixed)(((ah * bh) << 16) + ah * bl + al * bh + ((al * bl + 0x8000) >> 16));
 }
 
 fixed FixedDiv (fixed a, fixed b)
