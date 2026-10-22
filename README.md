@@ -16,8 +16,8 @@ changes:
 
 | where | how | platform |
 |---|---|---|
-| a C4IX desktop window | `wolf3d`, or Go > Wolfenstein 3D | `plat-c4ix.c`: the Terminal window as a canvas |
-| C4IX, the whole display | `wolf3d --direct`, like `raycast -G`; the page's `?system=wolf3d-c4ix` | `plat-c4ix.c` handing over to `plat-gui.c` |
+| C4IX, the whole display | `wolf3d`, or Go > Wolfenstein 3D, the desktop giving way until it ends (`include/display.h`); the page's `?system=wolf3d-c4ix` | `plat-c4ix.c` handing over to `plat-gui.c` |
+| a C4IX desktop window | `wolf3d --window` | `plat-c4ix.c`: the Terminal window as a canvas |
 | C4DOS | `WOLF3D` at the `A>` prompt; the page's `?system=c4dos` | `plat-bare.c`, over `plat-gui.c` |
 | the bare machine | `wolf3d.c4r` as the machine's image; the page's `?system=wolf3d` | `plat-bare.c`, over `plat-gui.c` |
 
@@ -54,7 +54,7 @@ same timedemo frames as the gcc build.
 | `id_*.c`, `wl_*.c`, `*.h`, `signon.c`, `wolfpal.inc` | Wolf4SDL, with the changes below |
 | `sdl/SDL.h`, `sdl/SDL_mixer.h` | the part of SDL 2 the game uses, and no more |
 | `c4sdl.c` | those functions, over a platform (`plat.h`): a window, key events, the clock and a sound card; SDL_mixer's calls over that card; the timedemo's virtual clock and frame checksum |
-| `plat-c4ix.c` | the platform on C4IX: the Terminal window as a canvas (`window.h`'s `win_fb`), or with `--direct` the whole display (`plat-gui.c`) |
+| `plat-c4ix.c` | the platform on C4IX: the whole display (`plat-gui.c`), taken from the desktop and given back, or with `--window` the Terminal window as a canvas (`window.h`'s `win_fb`) |
 | `plat-gui.c` | the display drawn directly (`libjs/guest/gui.h`), the browser's key codes as SDL scancodes, and libjs's sound card (`libjs/guest/snd.h`) for every platform that has one |
 | `plat-bare.c` | the platform with no C4IX: the bare machine and C4DOS, over `plat-gui.c` |
 | `plat-host.c` | the platform on a host, built with gcc: no window and no sound, frames to `.ppm` on request |

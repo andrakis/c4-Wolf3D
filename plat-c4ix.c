@@ -1,9 +1,11 @@
-// plat-c4ix.c -- c4sdl's platform on C4IX: the Terminal window it runs
-// in becomes its canvas (window.h), showing 8-bit frames the desktop has
-// the host scale and colour (win_fb, GUI_BLIT8). With --direct, as
-// raycast -G does, the game takes libjs's display itself instead
-// (plat-gui.c), from a console with no desktop on it. The sound card is
-// plat-gui.c's either way.
+// plat-c4ix.c -- c4sdl's platform on C4IX. The game takes libjs's whole
+// display (plat-gui.c), as raycast -G does: from the desktop, which gives
+// way until the game ends (include/display.h), or from a console with no
+// desktop on it. With --window, or when a program that does not give way
+// has the display, the Terminal window it runs in becomes its canvas
+// instead (window.h), showing 8-bit frames the desktop has the host scale
+// and colour (win_fb, GUI_BLIT8). The sound card is plat-gui.c's either
+// way.
 //
 // Two buffers: the desktop reads the one it was given when it next
 // draws, and says so (WIN_FRAME); until then a newer frame waits in the
@@ -20,6 +22,7 @@
 #include "SDL.h"
 #include "plat.h"
 #include "window.h"
+#include "display.h"
 
 extern int c4sdl_timedemo;
 
@@ -38,14 +41,22 @@ int plat_init(void) {
 }
 
 void plat_quit(void) {
-    if (c4sdl_direct) { pg_close(); return; }
+    if (c4sdl_direct) { pg_close(); udisplay_give(); return; }
     if (windowed && !closed) { win_close(); closed = 1; }
 }
 
 void plat_open(const char *title, int w, int h) {
     int i;
     if (!windowed) return;
-    if (c4sdl_direct) { if (!pg_open(title, w, h)) windowed = 0; return; }
+    // the display, once the desktop has given way; or the window
+    if (c4sdl_direct && !udisplay_take(0)) {
+        printf("wolf3d: a program has the display; playing in the window\n");
+        c4sdl_direct = 0;
+    }
+    if (c4sdl_direct) {
+        if (!pg_open(title, w, h)) { windowed = 0; udisplay_give(); }
+        return;
+    }
     fw = w; fh = h;
     for (i = 0; i < 2; i++) {
         fbuf[i] = (unsigned char *)calloc(w * h, 1);

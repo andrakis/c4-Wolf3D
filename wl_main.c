@@ -1792,7 +1792,9 @@ void CheckParameters(int argc, char *argv[])
         else IFARG("--sound")
             c4sdl_sound = 1;       // c4sdl: a timedemo plays sound too
         else IFARG("--direct")
-            c4sdl_direct = 1;      // c4sdl: on C4IX, the display itself, as raycast -G
+            c4sdl_direct = 1;      // c4sdl: on C4IX, the display itself, as raycast -G (the default)
+        else IFARG("--window")
+            c4sdl_direct = 0;      // c4sdl: on C4IX, the Terminal window instead
         else IFARG("--timedemo")
         {
             // c4sdl: play the demos in virtual time, then report
