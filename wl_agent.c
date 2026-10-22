@@ -56,12 +56,12 @@ statetype   s_attack = {false,0,0,T_Attack,NULL,NULL};
 struct atkinf
 {
     int8_t    tics,attack,frame;              // attack is 1 for gun, 2 for knife
-} attackinfo[(4) * (4)] =   // c4: 4 frames a weapon, all it uses
+} attackinfo[4][14] =
 {
-     {6,0,1},{6,2,2},{6,0,3},{6,-1,4} ,
-     {6,0,1},{6,1,2},{6,0,3},{6,-1,4} ,
-     {6,0,1},{6,1,2},{6,3,3},{6,-1,4} ,
-     {6,0,1},{6,1,2},{6,4,3},{6,-1,4} ,
+    { {6,0,1},{6,2,2},{6,0,3},{6,-1,4} },
+    { {6,0,1},{6,1,2},{6,0,3},{6,-1,4} },
+    { {6,0,1},{6,1,2},{6,3,3},{6,-1,4} },
+    { {6,0,1},{6,1,2},{6,4,3},{6,-1,4} },
 };
 
 //===========================================================================
@@ -851,10 +851,10 @@ boolean TryMove (objtype *ob)
     {
         for (x=xl;x<=xh;x++)
         {
-            check = actorat[(x)*(MAPSIZE)+(y)];
+            check = actorat[x][y];
             if (check && !ISPOINTER(check))
             {
-                if(tilemap[(x)*(MAPSIZE)+(y)]==BIT_WALL && x==pwallx && y==pwally)   // back of moving pushwall?
+                if(tilemap[x][y]==BIT_WALL && x==pwallx && y==pwally)   // back of moving pushwall?
                 {
                     switch(pwalldir)
                     {
@@ -897,7 +897,7 @@ boolean TryMove (objtype *ob)
     {
         for (x=xl;x<=xh;x++)
         {
-            check = actorat[(x)*(MAPSIZE)+(y)];
+            check = actorat[x][y];
             if (ISPOINTER(check) && check != player && (check->flags & FL_SHOOTABLE) )
             {
                 deltax = ob->x - check->x;
@@ -1071,9 +1071,9 @@ void Cmd_Fire (void)
 
     gamestate.attackframe = 0;
     gamestate.attackcount =
-        attackinfo[(gamestate.weapon)*(4)+(gamestate.attackframe)].tics;
+        attackinfo[gamestate.weapon][gamestate.attackframe].tics;
     gamestate.weaponframe =
-        attackinfo[(gamestate.weapon)*(4)+(gamestate.attackframe)].frame;
+        attackinfo[gamestate.weapon][gamestate.attackframe].frame;
 }
 
 //===========================================================================
@@ -1123,7 +1123,7 @@ void Cmd_Use (void)
         elevatorok = false;
     }
 
-    doornum = tilemap[(checkx)*(MAPSIZE)+(checky)];
+    doornum = tilemap[checkx][checky];
     if (MAPSPOT(checkx,checky,1) == PUSHABLETILE)
     {
         //
@@ -1140,7 +1140,7 @@ void Cmd_Use (void)
         //
         buttonheld[bt_use] = true;
 
-        tilemap[(checkx)*(MAPSIZE)+(checky)]++;              // flip switch
+        tilemap[checkx][checky]++;              // flip switch
         if (MAPSPOT(player->tilex,player->tiley,0) == ALTELEVATORTILE)
             playstate = ex_secretlevel;
         else
@@ -1396,7 +1396,7 @@ void    T_Attack (objtype *ob)
     gamestate.attackcount -= (short) tics;
     while (gamestate.attackcount <= 0)
     {
-        cur = &attackinfo[(gamestate.weapon)*(4)+(gamestate.attackframe)];
+        cur = &attackinfo[gamestate.weapon][gamestate.attackframe];
         switch (cur->attack)
         {
             case -1:
@@ -1447,7 +1447,7 @@ void    T_Attack (objtype *ob)
         gamestate.attackcount += cur->tics;
         gamestate.attackframe++;
         gamestate.weaponframe =
-            attackinfo[(gamestate.weapon)*(4)+(gamestate.attackframe)].frame;
+            attackinfo[gamestate.weapon][gamestate.attackframe].frame;
     }
 }
 

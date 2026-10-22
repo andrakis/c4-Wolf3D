@@ -42,25 +42,17 @@ it was ported, what c4lc needed, and how fast it goes.
 
 ## The changes to Wolf4SDL
 
-Each change is marked `c4sdl:` in the source.
+Each change is marked `c4sdl:` in the source. Everything else is
+Wolf4SDL's own code. The port used to write around what c4lc lacked: 2-D
+arrays, structs laid over the files' bytes under `#pragma pack(1)`, a struct passed by value, a
+typedef inside a function, float and `sizeof` initializers of globals,
+array parameters, braces around a scalar initializer, and several
+declarators in one declaration. c4lc has all of these now
+([docs/c4lc-design.md](../../docs/c4lc-design.md) 14.8), so those
+rewrites are gone.
 
-- **2-D arrays** become 1-D, because c4lc has none.
-  - `tilemap[x][y]` becomes `tilemap[(x)*(MAPSIZE)+(y)]`.
-  - A row `a[i]` becomes `(&a[(i)*(D)])`.
-  - Row braces in initializers go.
-  - Tables of strings become arrays of pointers.
-- **File layouts are read byte by byte** (`C4_W16`, `FONT_*`, `SHAPE_*` in `wl_def.h`).
-  - c4lc gives every struct member a word of its own, so a struct laid over a font, a sprite, a map header or the picture table would not match it.
-- **Constructs c4lc lacks are rewritten:**
-  - a struct passed by value;
-  - a typedef inside a function;
-  - a float or `lengthof()` in a global's initializer;
-  - `char *argv[]` as a parameter;
-  - braces around a scalar initializer;
-  - several function declarators in one declaration.
-- **Two bugs of Wolf4SDL's own:**
-  - `itoa`/`ltoa` sized their output by `strlen()` of the caller's uninitialized buffer, so the status bar's digits depended on what the stack held;
-  - `sizeof` was taken of a row pointer.
+- **A bug of Wolf4SDL's own:** `itoa`/`ltoa` sized their output by `strlen()` of the caller's uninitialized buffer, so the status bar's digits depended on what the stack held.
+- **Speed:** `FixedMul` in 32-bit pieces, `int`s rather than `int16_t` in the scalers, and the wall column drawn through a pointer (docs/c4ix-wolf3d.md, "How fast").
 - **Sound through libjs's sound card.** `id_sd.c`'s AdLib calls (`YM3812Write` and the rest) go to the card's OPL, and the game's own music player runs from its loop, keeping the card 100 ms ahead. The digitized sounds play as the game's 8-bit samples at 7,042 Hz, not converted. The PC speaker's sounds are silent. With no card (`plat-host.c`) the game runs silent, as before.
 - **The original 320x200 in 8 bits**, presented through a palette by the host (`GUI_BLIT8`).
 - **`--timedemo [N]`** plays the first N demos in virtual time and prints each one's frame count and a checksum of every frame shown. The gcc and c4lc builds must print the same.

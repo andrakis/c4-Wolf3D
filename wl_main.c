@@ -404,7 +404,7 @@ boolean SaveTheGame (FILE *file, int x, int y)
     {
         for (j = 0; j < mapheight; j++)
         {
-            ob = actorat[(i)*(MAPSIZE)+(j)];
+            ob = actorat[i][j];
 
             if (ISPOINTER(ob))
                 actnum = 0x8000 | (word)(ob - objlist);
@@ -536,9 +536,9 @@ boolean LoadTheGame (FILE *file, int x, int y)
             checksum = DoChecksum(&actnum,sizeof(word),checksum);
 
             if (actnum & 0x8000)
-                actorat[(i)*(MAPSIZE)+(j)] = &objlist[actnum & 0x7fff];
+                actorat[i][j] = &objlist[actnum & 0x7fff];
             else
-                actorat[(i)*(MAPSIZE)+(j)] = (objtype *)(uintptr_t)actnum;
+                actorat[i][j] = (objtype *)(uintptr_t)actnum;
         }
     }
 
@@ -618,7 +618,7 @@ boolean LoadTheGame (FILE *file, int x, int y)
             {
                 tile = *map;
 
-                if (MAPSPOT(x,y,1) == PUSHABLETILE && !tilemap[(x)*(MAPSIZE)+(y)] && !VALIDAREA(tile))
+                if (MAPSPOT(x,y,1) == PUSHABLETILE && !tilemap[x][y] && !VALIDAREA(tile))
                 {
                     if (VALIDAREA(*(map + 1)))
                         tile = *(map + 1);
@@ -709,14 +709,10 @@ void ShutdownId (void)
 ==================
 */
 
-static float radtoint;          // c4sdl: (float)(FINEANGLES/2/PI), set below
+const float radtoint = (float)(FINEANGLES/2/PI);
 
 void BuildTables (void)
 {
-    // c4sdl: c4lc takes only integer constants in a global's initializer
-    radtoint = (float)(FINEANGLES/2/PI);
-    costable = sintable+(ANGLES/4);
-
     //
     // calculate fine tangents
     //
@@ -1624,14 +1620,16 @@ static void TimeDemo (void)
     exit (0);
 }
 
-void CheckParameters(int argc, char **argv)
+void CheckParameters(int argc, char *argv[])
 {
-    const char *header =            // c4sdl: no braces, for c4lc
+    const char *header =
+    {
         "Wolf4SDL v2.0\n"
         "Ported by Chaos-Software, additions by the community\n"
         "Original Wolfenstein 3D by id Software\n"
         "Usage: Wolf4SDL [options]\n"
-        "See Options.txt for help\n\n";
+        "See Options.txt for help\n\n"
+    };
 
     int    i;
     size_t len;
@@ -1827,7 +1825,7 @@ void CheckParameters(int argc, char **argv)
 ==========================
 */
 
-int main (int argc, char **argv)
+int main (int argc, char *argv[])
 {
 #if defined(_arch_dreamcast)
     DC_Init();
@@ -1838,7 +1836,6 @@ int main (int argc, char **argv)
 #ifdef C4IX
     WolfData();                 // c4sdl: find the game, unpacking it the first time
 #endif
-    MenuCounts();               // c4sdl
     CheckForEpisodes();
 
     if (param_timedemo)

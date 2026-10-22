@@ -22,13 +22,13 @@ void VWB_DrawPropString(const char* string)
 	if(dest == NULL) return;
 
 	font = (fontstruct *) grsegs[STARTFONT+fontnumber];
-	height = FONT_HEIGHT(font);
+	height = font->height;
 	dest += scaleFactor * (ylookup[py] + px);
 
 	while ((ch = (byte)*string++)!=0)
 	{
-		width = step = FONT_WIDTH(font, ch);
-		source = ((byte *)font)+FONT_LOC(font, ch);
+		width = step = font->width[ch];
+		source = ((byte *)font)+font->location[ch];
 		while (width--)
 		{
 			for(i=0; i<height; i++)
@@ -53,9 +53,9 @@ void VWB_DrawPropString(const char* string)
 
 void VWL_MeasureString (const char *string, word *width, word *height, fontstruct *font)
 {
-	*height = FONT_HEIGHT(font);
+	*height = font->height;
 	for (*width = 0;*string;string++)
-		*width += FONT_WIDTH(font, *((byte *)string));	// proportional width
+		*width += font->width[*((byte *)string)];	// proportional width
 }
 
 void VW_MeasurePropString (const char *string, word *width, word *height)

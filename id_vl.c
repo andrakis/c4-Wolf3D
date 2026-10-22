@@ -55,11 +55,7 @@ SDL_Color palette1[256], palette2[256];
 SDL_Color curpal[256];
 
 
-#ifdef C4IX
-#define CASSERT(x)      // c4lc takes no sizeof in an array size
-#else
 #define CASSERT(x) extern int ASSERT_COMPILE[((x) != 0) * 2 - 1];
-#endif
 #define RGB(r, g, b) {(r)*255/63, (g)*255/63, (b)*255/63, SDL_ALPHA_OPAQUE}
 
 SDL_Color gamepal[]={

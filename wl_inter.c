@@ -403,19 +403,17 @@ BJ_Breathe (void)
 ==================
 */
 
-// c4sdl: at file scope, where c4lc takes a typedef
-typedef struct
-{
-    float time;
-    char timestr[6];
-} times;
-
 void
 LevelCompleted (void)
 {
 #define VBLWAIT 30
 #define PAR_AMOUNT      500
 #define PERCENT100AMT   10000
+    typedef struct
+    {
+        float time;
+        char timestr[6];
+    } times;
 
     int x, i, min, sec, ratio, kr, sr, tr;
     char tempstr[10];
@@ -1252,7 +1250,7 @@ NonShareware (void)
 // COPY PROTECTION FOR FormGen
 //
 ////////////////////////////////////////////////////////
-char *CopyProFailedStrs[] = {
+char CopyProFailedStrs[][100] = {
     STR_COPY1,
     STR_COPY2,
 
@@ -1281,7 +1279,7 @@ char *CopyProFailedStrs[] = {
     ""
 };
 
-char *BackDoorStrs[5] = {
+char BackDoorStrs[5][16] = {
     "a spoon?",
     "bite me!",
     "joshua",
@@ -1289,7 +1287,7 @@ char *BackDoorStrs[5] = {
     "snoops"
 };
 
-char *GoodBoyStrs[10] = {
+char GoodBoyStrs[10][40] = {
     "...is the CORRECT ANSWER!",
     "",
 
@@ -1306,14 +1304,14 @@ char *GoodBoyStrs[10] = {
     ""
 };
 
-char *bossstrs[4] = {
+char bossstrs[4][24] = {
     "DEATH KNIGHT",
     "BARNACLE WILHELM",
     "UBERMUTANTUBER MUTANT",
     "TRANS GROSSE"
 };
 
-char *WordStr[5] = {
+char WordStr[5][20] = {
     "New Game",
     "Sound...F4",
     "Control...F6",
@@ -1321,9 +1319,9 @@ char *WordStr[5] = {
     "Quit...F10"
 };
 
-char *WordCorrect[5] = { "3", "4", "4", "5", "5" };
+char WordCorrect[5][2] = { "3", "4", "4", "5", "5" };
 
-char *MemberStr[10] = {
+char MemberStr[10][40] = {
     STR_COPY15,
     "",
 
@@ -1340,7 +1338,7 @@ char *MemberStr[10] = {
     STR_COPY22
 };
 
-char *MemberCorrect[5] = {
+char MemberCorrect[5][24] = {
     "adrian carmack",
     "john carmackjohn romero",
     "tom hall",
@@ -1348,7 +1346,7 @@ char *MemberCorrect[5] = {
     "kevin cloud"
 };
 
-char *DosMessages[9] = {
+char DosMessages[9][80] = {
     STR_NOPE1,
     STR_NOPE2,
     STR_NOPE3,
@@ -1360,14 +1358,14 @@ char *DosMessages[9] = {
     STR_NOPE9
 };
 
-char *MiscTitle[4] = {
+char MiscTitle[4][20] = {
     "BLOOD TEST",
     "STRAIGHT-LACED",
     "QUITE SHAPELY",
     "I AM WHAT I AMMO"
 };
 
-char *MiscStr[12] = {
+char MiscStr[12][40] = {
     STR_MISC1,
     STR_MISC2,
     "",
@@ -1385,7 +1383,7 @@ char *MiscStr[12] = {
     STR_MISC9
 };
 
-char *MiscCorrect[4] = { "ss", "8", STR_STAR, "45" };
+char MiscCorrect[4][5] = { "ss", "8", STR_STAR, "45" };
 
 
 int

@@ -23,17 +23,17 @@
 static const byte opposite[9] =
     {west,southwest,south,southeast,east,northeast,north,northwest,nodir};
 
-static const byte diagonal[(9) * (9)] =
+static const byte diagonal[9][9] =
 {
-    /* east */  nodir,nodir,northeast,nodir,nodir,nodir,southeast,nodir,nodir,
-                nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,
-    /* north */ northeast,nodir,nodir,nodir,northwest,nodir,nodir,nodir,nodir,
-                nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,
-    /* west */  nodir,nodir,northwest,nodir,nodir,nodir,southwest,nodir,nodir,
-                nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,
-    /* south */ southeast,nodir,nodir,nodir,southwest,nodir,nodir,nodir,nodir,
-                nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,
-                nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir
+    /* east */  {nodir,nodir,northeast,nodir,nodir,nodir,southeast,nodir,nodir},
+                {nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir},
+    /* north */ {northeast,nodir,nodir,nodir,northwest,nodir,nodir,nodir,nodir},
+                {nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir},
+    /* west */  {nodir,nodir,northwest,nodir,nodir,nodir,southwest,nodir,nodir},
+                {nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir},
+    /* south */ {southeast,nodir,nodir,nodir,southwest,nodir,nodir,nodir,nodir},
+                {nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir},
+                {nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir,nodir}
 };
 
 
@@ -85,7 +85,7 @@ objtype *SpawnNewObj (unsigned tilex, unsigned tiley, statetype *state)
     newobj->y = ((int32_t)tiley<<TILESHIFT)+TILEGLOBAL/2;
     newobj->dir = nodir;
 
-    actorat[(tilex)*(MAPSIZE)+(tiley)] = newobj;
+    actorat[tilex][tiley] = newobj;
     newobj->areanumber = MAPSPOT(tilex,tiley,0) - AREATILE;
 
     return newobj;
@@ -146,7 +146,7 @@ void NewState (objtype *ob, statetype *state)
 
 #define CHECKDIAG(x,y)                              \
 {                                                   \
-    temp=(uintptr_t)actorat[(x)*(MAPSIZE)+(y)];                  \
+    temp=(uintptr_t)actorat[x][y];                  \
     if (temp)                                       \
     {                                               \
         if (temp<BIT_ALLTILES)                      \
@@ -185,7 +185,7 @@ void NewState (objtype *ob, statetype *state)
 
 #define CHECKSIDE(x,y)                                  \
 {                                                       \
-    temp=(uintptr_t)actorat[(x)*(MAPSIZE)+(y)];                      \
+    temp=(uintptr_t)actorat[x][y];                      \
     if (temp)                                           \
     {                                                   \
         if (temp<BIT_DOOR)                              \
@@ -452,7 +452,7 @@ void SelectDodgeDir (objtype *ob)
         dirtry[4] = tdir;
     }
 
-    dirtry[0] = diagonal[(dirtry[1])*(9)+(dirtry[2])];
+    dirtry[0] = diagonal [ dirtry[1] ] [ dirtry[2] ];
 
     //
     // try the directions util one works
@@ -741,7 +741,7 @@ void MoveObj (objtype *ob, int32_t move)
             // where he gets stuck, but not exploit it by moving further into
             // the guard and effectively no-clipping through them...
             //
-            if (!ob->hidden || !spotvis[(player->tilex)*(MAPSIZE)+(player->tiley)])
+            if (!ob->hidden || !spotvis[player->tilex][player->tiley])
             {
                 if (ob->obclass == ghostobj || ob->obclass == spectreobj)
                     TakeDamage (tics*2,ob);
@@ -782,7 +782,7 @@ void DropItem (int itemtype, int tilex, int tiley)
     //
     // find a free spot to put it in
     //
-    if (!actorat[(tilex)*(MAPSIZE)+(tiley)])
+    if (!actorat[tilex][tiley])
     {
         PlaceItemType (itemtype, tilex,tiley);
         return;
@@ -797,7 +797,7 @@ void DropItem (int itemtype, int tilex, int tiley)
     {
         for (y=yl ; y<= yh ; y++)
         {
-            if (!actorat[(x)*(MAPSIZE)+(y)])
+            if (!actorat[x][y])
             {
                 PlaceItemType (itemtype, x,y);
                 return;
@@ -948,7 +948,7 @@ void KillActor (objtype *ob)
 
     gamestate.killcount++;
     ob->flags &= ~FL_SHOOTABLE;
-    actorat[(ob->tilex)*(MAPSIZE)+(ob->tiley)] = NULL;
+    actorat[ob->tilex][ob->tiley] = NULL;
     ob->flags |= FL_NONMARK;
 }
 
@@ -1092,7 +1092,7 @@ boolean CheckLine (objtype *ob)
             y = yfrac>>8;
             yfrac += ystep;
 
-            value = (unsigned)tilemap[(x)*(MAPSIZE)+(y)];
+            value = (unsigned)tilemap[x][y];
             x += xstep;
 
             if (!value)
@@ -1146,7 +1146,7 @@ boolean CheckLine (objtype *ob)
             x = xfrac>>8;
             xfrac += xstep;
 
-            value = (unsigned)tilemap[(x)*(MAPSIZE)+(y)];
+            value = (unsigned)tilemap[x][y];
             y += ystep;
 
             if (!value)

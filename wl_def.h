@@ -1071,11 +1071,11 @@ extern  boolean     madenoise;
 extern  objtype     objlist[MAXACTORS];
 extern  objtype     *player,*objfreelist;
 
-extern  tiletype    tilemap[(MAPSIZE) * (MAPSIZE)];      // wall values only
-extern  bool        spotvis[(MAPSIZE) * (MAPSIZE)];
-extern  objtype     *actorat[(MAPSIZE) * (MAPSIZE)];
+extern  tiletype    tilemap[MAPSIZE][MAPSIZE];      // wall values only
+extern  bool        spotvis[MAPSIZE][MAPSIZE];
+extern  objtype     *actorat[MAPSIZE][MAPSIZE];
 #ifdef REVEALMAP
-extern  bool        mapseen[(MAPSIZE) * (MAPSIZE)];
+extern  bool        mapseen[MAPSIZE][MAPSIZE];
 #endif
 extern  boolean     singlestep,godmode,noclip,ammocheat,mapreveal;
 extern  int         extravbls;
@@ -1317,7 +1317,7 @@ extern  doorobj_t   doorobjlist[MAXDOORS];
 extern  doorobj_t   *lastdoorobj;
 extern  short       doornum;
 
-extern  byte      areaconnect[(NUMAREAS) * (NUMAREAS)];
+extern  byte      areaconnect[NUMAREAS][NUMAREAS];
 
 extern  boolean   areabyplayer[NUMAREAS];
 
@@ -1488,18 +1488,6 @@ void GP2X_ButtonUp (int button);
 #define GetTicks() ((SDL_GetTicks()*7)/100)
 
 #define ISPOINTER(x) ((((uintptr_t)(x)) & ~0xffff) != 0)
-
-// c4sdl: data laid out as in the files (fonts, sprites, map and picture
-// headers) is read a byte at a time. c4lc gives each member of a struct a
-// word of its own, so a struct laid over such data would not match it.
-#define C4_W16(p)        ((word)(((byte *)(p))[0] | (((byte *)(p))[1] << 8)))
-#define C4_W32(p)        ((int32_t)(C4_W16(p) | ((uint32_t)C4_W16((byte *)(p) + 2) << 16)))
-#define FONT_HEIGHT(f)   C4_W16(f)
-#define FONT_LOC(f, c)   C4_W16((byte *)(f) + 2 + 2 * (c))
-#define FONT_WIDTH(f, c) (((byte *)(f))[2 + 2 * 256 + (c)])
-#define SHAPE_LEFT(s)    C4_W16(s)
-#define SHAPE_RIGHT(s)   C4_W16((byte *)(s) + 2)
-#define SHAPE_OFS(s, i)  C4_W16((byte *)(s) + 4 + 2 * (i))
 
 #ifndef _WIN32
     static inline char *itoa (int value, char *string, int radix)

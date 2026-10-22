@@ -45,7 +45,7 @@ int16_t *wallheight;
 short *pixelangle;
 int32_t finetangent[FINEANGLES/4];
 fixed sintable[ANGLES+ANGLES/4];
-fixed *costable;                // c4sdl: sintable+(ANGLES/4), set by BuildTables
+fixed *costable = sintable+(ANGLES/4);
 
 //
 // refresh variables
@@ -309,7 +309,7 @@ void ScalePost (void)
 #endif
 
 #ifdef USE_SHADING
-    byte *curshades = (&shadetable[(GetShade(wallheight[postx]))*(256)]);
+    byte *curshades = shadetable[GetShade(wallheight[postx])];
 #endif
 
     ywcount = yd = wallheight[postx] >> 3;
@@ -441,7 +441,7 @@ void HitVertWall (void)
         //
         // check for adjacent doors
         //
-        if (tilemap[(xtile - xtilestep)*(MAPSIZE)+(yinttile)] & BIT_DOOR)
+        if (tilemap[xtile - xtilestep][yinttile] & BIT_DOOR)
             wallpic = DOORWALL+3;
         else
             wallpic = vertwall[tilehit & ~BIT_WALL];
@@ -488,7 +488,7 @@ void HitHorizWall (void)
         //
         // check for adjacent doors
         //
-        if (tilemap[(xinttile)*(MAPSIZE)+(ytile - ytilestep)] & BIT_DOOR)
+        if (tilemap[xinttile][ytile - ytilestep] & BIT_DOOR)
             wallpic = DOORWALL + 2;
         else
             wallpic = horizwall[tilehit & ~BIT_WALL];
@@ -627,9 +627,9 @@ void VGAClearScreen (void)
     byte *dest = vbuf;
 #ifdef USE_SHADING
     for(y = 0; y < viewheight / 2; y++, dest += bufferPitch)
-        memset(dest, shadetable[(GetShade((viewheight / 2 - y) << 3))*(256)+(ceiling)], viewwidth);
+        memset(dest, shadetable[GetShade((viewheight / 2 - y) << 3)][ceiling], viewwidth);
     for(; y < viewheight; y++, dest += bufferPitch)
-        memset(dest, shadetable[(GetShade((y - viewheight / 2) << 3))*(256)+(0x19)], viewwidth);
+        memset(dest, shadetable[GetShade((y - viewheight / 2) << 3)][0x19], viewwidth);
 #else
     for(y = 0; y < viewheight / 2; y++, dest += bufferPitch)
         memset(dest, ceiling, viewwidth);
@@ -708,7 +708,7 @@ void DrawScaleds (void)
         if ((visptr->shapenum = statptr->shapenum) == -1)
             continue;                                               // object has been deleted
 
-        if (!spotvis[(statptr->tilex)*(MAPSIZE)+(statptr->tiley)])
+        if (!spotvis[statptr->tilex][statptr->tiley])
             continue;                                               // not visable
 
         if (TransformTile (statptr->tilex,statptr->tiley,
@@ -739,7 +739,7 @@ void DrawScaleds (void)
         if ((visptr->shapenum = obj->state->shapenum)==0)
             continue;                                               // no shape
 
-        visspot = (byte *)&spotvis[(obj->tilex)*(MAPSIZE)+(obj->tiley)];
+        visspot = (byte *)&spotvis[obj->tilex][obj->tiley];
 
         //
         // could be in any of the nine surrounding tiles
@@ -985,7 +985,7 @@ void WallRefresh (void)
         //
         // special treatment when player is in back tile of pushwall
         //
-        if (tilemap[(focaltx)*(MAPSIZE)+(focalty)] == BIT_WALL)
+        if (tilemap[focaltx][focalty] == BIT_WALL)
         {
             if ((pwalldir == di_east && xtilestep == 1) || (pwalldir == di_west && xtilestep == -1))
             {
@@ -1048,9 +1048,9 @@ void WallRefresh (void)
                 goto horizentry;
 vertentry:
 #ifdef REVEALMAP
-            mapseen[(xtile)*(MAPSIZE)+(yinttile)] = true;
+            mapseen[xtile][yinttile] = true;
 #endif
-            tilehit = tilemap[(xtile)*(MAPSIZE)+(yinttile)];
+            tilehit = tilemap[xtile][yinttile];
 
             if (tilehit)
             {
@@ -1222,7 +1222,7 @@ passvert:
             //
             // mark the tile as visible and setup for next step
             //
-            spotvis[(xtile)*(MAPSIZE)+(yinttile)] = true;
+            spotvis[xtile][yinttile] = true;
             xtile += xtilestep;
             yintercept += ystep;
             yinttile = yintercept >> TILESHIFT;
@@ -1243,9 +1243,9 @@ passvert:
 
 horizentry:
 #ifdef REVEALMAP
-            mapseen[(xinttile)*(MAPSIZE)+(ytile)] = true;
+            mapseen[xinttile][ytile] = true;
 #endif
-            tilehit = tilemap[(xinttile)*(MAPSIZE)+(ytile)];
+            tilehit = tilemap[xinttile][ytile];
 
             if (tilehit)
             {
@@ -1419,7 +1419,7 @@ passhoriz:
             //
             // mark the tile as visible and setup for next step
             //
-            spotvis[(xinttile)*(MAPSIZE)+(ytile)] = true;
+            spotvis[xinttile][ytile] = true;
             ytile += ytilestep;
             xintercept += xstep;
             xinttile = xintercept >> TILESHIFT;
@@ -1475,11 +1475,11 @@ void ThreeDRefresh (void)
 #ifdef PLAYDEMOLIKEORIGINAL      // ADDEDFIX 30 - Chris
     if (DEMOCOND_SDL)
 #endif
-    if (!tilemap[(player->tilex)*(MAPSIZE)+(player->tiley)] ||
-         tilemap[(player->tilex)*(MAPSIZE)+(player->tiley)] & BIT_DOOR)
-    spotvis[(player->tilex)*(MAPSIZE)+(player->tiley)] = true;       // Detect all sprites over player fix
+    if (!tilemap[player->tilex][player->tiley] ||
+         tilemap[player->tilex][player->tiley] & BIT_DOOR)
+    spotvis[player->tilex][player->tiley] = true;       // Detect all sprites over player fix
 #ifdef REVEALMAP
-    mapseen[(player->tilex)*(MAPSIZE)+(player->tiley)] = true;
+    mapseen[player->tilex][player->tiley] = true;
 #endif
 
     vbuf = VL_LockSurface(screenBuffer);

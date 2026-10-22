@@ -200,17 +200,17 @@ US_PrintSigned(int32_t n)
 //
 ///////////////////////////////////////////////////////////////////////////
 void
-USL_PrintInCenter(const char *s,Rect *r)   // c4sdl: by pointer
+USL_PrintInCenter(const char *s,Rect r)
 {
 	word	w,h,
 			rw,rh;
 
 	USL_MeasureString(s,&w,&h);
-	rw = r->lr.x - r->ul.x;
-	rh = r->lr.y - r->ul.y;
+	rw = r.lr.x - r.ul.x;
+	rh = r.lr.y - r.ul.y;
 
-	px = r->ul.x + ((rw - w) / 2);
-	py = r->ul.y + ((rh - h) / 2);
+	px = r.ul.x + ((rw - w) / 2);
+	py = r.ul.y + ((rh - h) / 2);
 	USL_DrawString(s);
 }
 
@@ -229,7 +229,7 @@ US_PrintCentered(const char *s)
 	r.lr.x = r.ul.x + WindowW;
 	r.lr.y = r.ul.y + WindowH;
 
-	USL_PrintInCenter(s,&r);
+	USL_PrintInCenter(s,r);
 }
 
 ///////////////////////////////////////////////////////////////////////////
