@@ -70,6 +70,17 @@ unsigned int plat_ticks(void) {
     return t.tv_sec * 1000 + t.tv_nsec / 1000000;
 }
 
+// no sound card: the game runs silent, as it did with no audio device
+int  plat_snd_open(int rate) { return 0; }
+void plat_snd_close(void) { }
+void plat_snd_opl(int reg, int val) { }
+void plat_snd_wait(int samples) { }
+int  plat_snd_ahead(void) { return 0; }
+void plat_snd_play(int ch, unsigned char *data, int len, int rate, int vol) { }
+void plat_snd_stop(int ch) { }
+void plat_snd_volume(int ch, int vol) { }
+int  plat_snd_busy(void) { return 0; }
+
 void plat_delay(unsigned int ms) {
     struct timespec t;
     t.tv_sec = ms / 1000;

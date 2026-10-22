@@ -99,6 +99,7 @@ boolean param_goodtimes = false;
 boolean param_ignorenumchunks = false;
 int     param_timedemo = 0;            // c4sdl: how many demos --timedemo plays
 extern int c4sdl_timedemo;
+extern int c4sdl_sound;
 extern unsigned int c4sdl_frames, c4sdl_sum;
 void WolfData(void);
 unsigned int plat_ticks(void);
@@ -1789,6 +1790,8 @@ void CheckParameters(int argc, char **argv)
             param_goodtimes = true;
         else IFARG("--ignorenumchunks")
             param_ignorenumchunks = true;
+        else IFARG("--sound")
+            c4sdl_sound = 1;       // c4sdl: a timedemo plays sound too
         else IFARG("--timedemo")
         {
             // c4sdl: play the demos in virtual time, then report

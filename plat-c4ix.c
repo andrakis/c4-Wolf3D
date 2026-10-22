@@ -17,6 +17,7 @@
 #include "SDL.h"
 #include "plat.h"
 #include "window.h"
+#include "snd.h"
 
 extern int c4sdl_timedemo;
 
@@ -134,6 +135,22 @@ int plat_event(int *kind, int *sc, int *ch) {
 }
 
 unsigned int plat_ticks(void) { return clock(); }
+
+// ---- the sound card: libjs's, when the machine has one ----
+int plat_snd_open(int rate) {
+    if (!snd_present()) return 0;
+    snd_reset();
+    snd_clock(rate);
+    return 1;
+}
+void plat_snd_close(void) { if (snd_present()) snd_reset(); }
+void plat_snd_opl(int reg, int val) { snd_opl(reg, val); }
+void plat_snd_wait(int samples) { snd_wait(samples); }
+int  plat_snd_ahead(void) { return snd_ahead(); }
+void plat_snd_play(int ch, unsigned char *data, int len, int rate, int vol) { snd_play(ch, (char *)data, len, rate, vol); }
+void plat_snd_stop(int ch) { snd_stop(ch); }
+void plat_snd_volume(int ch, int vol) { snd_volume(ch, vol); }
+int  plat_snd_busy(void) { return snd_busy(); }
 
 void plat_delay(unsigned int ms) {
 

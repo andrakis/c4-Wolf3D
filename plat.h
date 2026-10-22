@@ -17,4 +17,18 @@ int  plat_event(int *kind, int *sc, int *ch);
 unsigned int plat_ticks(void);           // milliseconds
 void plat_delay(unsigned int ms);
 
+// The sound card, if there is one: libjs's (libjs/guest/snd.h). An OPL
+// write is stamped with the stream's time, which plat_snd_wait moves on
+// in samples at RATE; plat_snd_ahead is how far ahead it is, in
+// microseconds. A sample plays now: unsigned 8-bit, vol left | right << 8.
+int  plat_snd_open(int rate);            // 0: there is none
+void plat_snd_close(void);
+void plat_snd_opl(int reg, int val);
+void plat_snd_wait(int samples);
+int  plat_snd_ahead(void);
+void plat_snd_play(int ch, unsigned char *data, int len, int rate, int vol);
+void plat_snd_stop(int ch);              // -1: all
+void plat_snd_volume(int ch, int vol);
+int  plat_snd_busy(void);                // a bit per channel still playing
+
 #endif

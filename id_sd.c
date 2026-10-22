@@ -418,6 +418,11 @@ void SD_PrepareSound(int which)
     if(origsamples + size >= PM_GetPageEnd())
         Quit("SD_PrepareSound(%i): Sound reaches out of page file!\n", which);
 
+    // c4sdl: the sound card plays the game's own samples at their own
+    // rate, where the page file keeps them: nothing to convert
+    SoundChunks[which] = c4sdl_rawchunk(origsamples, size, ORIGSAMPLERATE);
+    return;
+
     int destsamples = (int) ((float) size * (float) param_samplerate
         / (float) ORIGSAMPLERATE);
 
@@ -965,6 +970,7 @@ SD_Shutdown(void)
     {
         if(SoundChunks[i]) Mix_FreeChunk(SoundChunks[i]);
     }
+    Mix_CloseAudio();      // c4sdl: the card quiet, the music player gone
 
     free (DigiList);
     DigiList = NULL;

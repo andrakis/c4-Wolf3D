@@ -16,6 +16,7 @@
 #include "plat.h"
 
 int c4sdl_timedemo;            // virtual time, and frames counted
+int c4sdl_sound;               // --sound: a timedemo plays sound too
 unsigned int c4sdl_frames;
 unsigned int c4sdl_sum;
 static unsigned int c4sdl_vclock;
@@ -156,6 +157,7 @@ void c4sdl_present(Uint8 *pixels, int w, int h, int pitch, SDL_Color *pal) {
             printf("frame %u %08x\n", c4sdl_frames, sum);
     }
     plat_present(pixels, w, h, pitch, pal);
+    c4sdl_sound_service();
 }
 
 // ---- events ----
@@ -197,6 +199,7 @@ static void pump(void) {
 }
 
 int SDL_PollEvent(SDL_Event *e) {
+    c4sdl_sound_service();
     pump();
     if (qhead == qtail) return 0;
     if (e) *e = queue[qhead];
@@ -237,29 +240,159 @@ Uint32 SDL_GetTicks(void) {
 }
 
 void SDL_Delay(Uint32 ms) {
+    c4sdl_sound_service();
     if (c4sdl_timedemo) { c4sdl_vclock += ms; return; }
     plat_delay(ms);
 }
 
-// ---- no audio device yet ----
-int Mix_OpenAudioDevice(int frequency, Uint16 format, int channels, int chunksize, const char *device, int changes) { return -1; }
-int Mix_QuerySpec(int *frequency, Uint16 *format, int *channels) { return 0; }
-const char *Mix_GetError(void) { return "no sound device"; }
-int Mix_ReserveChannels(int num) { return 0; }
-int Mix_GroupChannels(int from, int to, int tag) { return 0; }
-int Mix_GroupAvailable(int tag) { return -1; }
-int Mix_GroupOldest(int tag) { return -1; }
-int Mix_HaltChannel(int channel) { return 0; }
-int Mix_SetPanning(int channel, Uint8 left, Uint8 right) { return 0; }
-int Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops) { return -1; }
-void Mix_FreeChunk(Mix_Chunk *chunk) { }
+// ---- the mixer, over the platform's sound card ----
+//
+// Eight channels of the game's own samples: SDL_mixer would convert them
+// to the device's rate, and id_sd.c did, in floating point, which took
+// seconds; the card plays them at their own. Which channels are still
+// playing is the card's to say, so Mix_ChannelFinished's callback is
+// called when one is seen to have stopped: here, in the service, and
+// when a sound is halted or replaced, as SDL_mixer calls it.
+//
+// The music is id_sd.c's SDL_IMFMusicPlayer, which SDL_mixer would call
+// from its audio thread for each buffer. Here it is called from the game's
+// own loop -- the event pump, SDL_Delay, each frame -- until the card's
+// stream is MUSIC_AHEAD ahead: its OPL writes are stamped with stream
+// time (YM3812UpdateOne only moves the stream on), so it plays evenly
+// however unevenly the game calls it.
+enum { RATE = 44100, MUSIC_AHEAD = 100000, MUSIC_BLOCK = 441, MUSIC_MAX = 64 };
+static int snd_on;
+static void (*music_fn)(void *, Uint8 *, int);
+static void *music_arg;
+static void (*finished_fn)(int);
+static int music_busy;                    // in music_fn: no service from inside it
+static int playing;                       // channels playing, as last seen
+static int reserved;                      // below this, only by number
+static int group_of[MIX_CHANNELS];
+static unsigned int started[MIX_CHANNELS];
+static unsigned int nstarted;
+static int chan_vol[MIX_CHANNELS];
+static Uint8 music_buf[1764];             // MUSIC_BLOCK stereo 16-bit samples
+
+// channels that were playing and are not now: their callbacks
+static void finished(int stopped) {
+    int i;
+    playing &= ~stopped;
+    if (!finished_fn) return;
+    for (i = 0; i < MIX_CHANNELS; i++)
+        if ((stopped >> i) & 1) finished_fn(i);
+}
+
+void c4sdl_sound_service(void) {
+    int n;
+    if (!snd_on) return;
+    if (music_fn && !music_busy) {
+        music_busy = 1;
+        n = 0;
+        while (n < MUSIC_MAX && plat_snd_ahead() < MUSIC_AHEAD) {
+            music_fn(music_arg, music_buf, MUSIC_BLOCK * 4);
+            ++n;
+        }
+        music_busy = 0;
+    }
+    finished(playing & ~plat_snd_busy());
+}
+
+int Mix_OpenAudioDevice(int frequency, Uint16 format, int channels, int chunksize, const char *device, int changes) {
+    int i;
+    // a timedemo is silent unless asked, so its frames are the gcc build's
+    if (c4sdl_timedemo && !c4sdl_sound) return -1;
+    if (!plat_snd_open(RATE)) return -1;
+    for (i = 0; i < MIX_CHANNELS; i++) { group_of[i] = -1; chan_vol[i] = 0xffff; }
+    snd_on = 1;
+    return 0;
+}
+void Mix_CloseAudio(void) {
+    if (!snd_on) return;
+    plat_snd_close();
+    snd_on = 0;
+    music_fn = 0;
+}
+int Mix_QuerySpec(int *frequency, Uint16 *format, int *channels) {
+    if (frequency) *frequency = RATE;
+    if (format) *format = AUDIO_S16;
+    if (channels) *channels = 2;
+    return snd_on;
+}
+const char *Mix_GetError(void) { return snd_on ? "c4sdl: no free channel" : "no sound device"; }
+int Mix_ReserveChannels(int num) { reserved = num; return num; }
+int Mix_GroupChannels(int from, int to, int tag) {
+    int i;
+    for (i = from; i <= to && i < MIX_CHANNELS; i++) group_of[i] = tag;
+    return to - from + 1;
+}
+int Mix_GroupAvailable(int tag) {
+    int i, b;
+    b = snd_on ? plat_snd_busy() : 0;
+    for (i = 0; i < MIX_CHANNELS; i++)
+        if ((tag == -1 || group_of[i] == tag) && !((b >> i) & 1)) return i;
+    return -1;
+}
+int Mix_GroupOldest(int tag) {
+    int i, b, best;
+    b = snd_on ? plat_snd_busy() : 0;
+    best = -1;
+    for (i = 0; i < MIX_CHANNELS; i++)
+        if ((tag == -1 || group_of[i] == tag) && ((b >> i) & 1) &&
+            (best < 0 || started[i] < started[best])) best = i;
+    return best;
+}
+int Mix_HaltChannel(int channel) {
+    if (!snd_on) return 0;
+    plat_snd_stop(channel);
+    finished(channel < 0 ? playing : playing & (1 << channel));
+    return 0;
+}
+int Mix_SetPanning(int channel, Uint8 left, Uint8 right) {
+    if (channel < 0 || channel >= MIX_CHANNELS) return 0;
+    chan_vol[channel] = left | (right << 8);
+    // a sound that moves is panned as it plays
+    if (snd_on && ((plat_snd_busy() >> channel) & 1)) plat_snd_volume(channel, chan_vol[channel]);
+    return 1;
+}
+int Mix_PlayChannel(int channel, Mix_Chunk *chunk, int loops) {
+    int b;
+    if (!snd_on || !chunk || !chunk->alen) return -1;
+    b = plat_snd_busy();
+    if (channel < 0) {
+        channel = reserved;
+        while (channel < MIX_CHANNELS && ((b >> channel) & 1)) ++channel;
+        if (channel >= MIX_CHANNELS) return -1;
+    }
+    if (channel >= MIX_CHANNELS) return -1;
+    // the sound it replaces is finished, before this one starts
+    finished(playing & (1 << channel));
+    plat_snd_play(channel, chunk->abuf, chunk->alen, chunk->rate, chan_vol[channel]);
+    started[channel] = ++nstarted;
+    playing |= 1 << channel;
+    return channel;
+}
+Mix_Chunk *c4sdl_rawchunk(Uint8 *samples, int len, int rate) {
+    Mix_Chunk *c;
+    c = (Mix_Chunk *)malloc(sizeof(Mix_Chunk));
+    if (!c) return NULL;
+    c->allocated = 0;
+    c->abuf = samples;
+    c->alen = len;
+    c->volume = 128;
+    c->rate = rate;
+    return c;
+}
+void Mix_FreeChunk(Mix_Chunk *chunk) { if (chunk) free(chunk); }
 Mix_Chunk *Mix_LoadWAV_RW(SDL_RWops *src, int freesrc) { return NULL; }
-void Mix_HookMusic(void (*fn)(void *, Uint8 *, int), void *arg) { }
-void Mix_ChannelFinished(void (*fn)(int)) { }
+void Mix_HookMusic(void (*fn)(void *, Uint8 *, int), void *arg) { music_fn = fn; music_arg = arg; }
+void Mix_ChannelFinished(void (*fn)(int)) { finished_fn = fn; }
+// the PC speaker's mixer: not here, so the PC speaker is silent
 int Mix_SetPostMix(void (*fn)(void *, Uint8 *, int), void *arg) { return 0; }
 SDL_RWops *SDL_RWFromMem(void *mem, int size) { return NULL; }
 
-// ---- the AdLib, for when there is one (c4opl.h) ----
-int YM3812Init(int num, int clock, int rate) { return 1; }
-void YM3812Write(int chip, int reg, int val) { }
-void YM3812UpdateOne(int chip, short *buf, int length) { memset(buf, 0, length * 4); }
+// ---- the AdLib: the sound card's OPL ----
+int YM3812Init(int num, int clock, int rate) { return snd_on ? 0 : 1; }
+void YM3812Write(int chip, int reg, int val) { if (snd_on) plat_snd_opl(reg, val); }
+// the music player's samples: the card makes them, so the stream moves on
+void YM3812UpdateOne(int chip, short *buf, int length) { if (snd_on) plat_snd_wait(length); }
