@@ -35,7 +35,7 @@ it was ported, what c4lc needed, and how fast it goes.
 | `c4sdl.c` | those functions, over a platform (`plat.h`): a window, key events, the clock and a sound card; SDL_mixer's calls over that card; the timedemo's virtual clock and frame checksum |
 | `plat-c4ix.c` | the platform on C4IX: the Terminal window as a canvas (`window.h`'s `win_fb`), and libjs's sound card (`libjs/guest/snd.h`) |
 | `plat-host.c` | the platform on a host, built with gcc: no window and no sound, frames to `.ppm` on request |
-| `c4file.c`, `c4file.h` | files read and written whole, since C4IX has no seek |
+| `c4file.c`, `c4file.h` | files read and written whole, since C4IX had no seek when they were written (`lseek` came with M7c, docs/busybox-port.md) |
 | `wolfinst.c`, `explode.c`, `arc.c` | the first run: `1wolf14.zip` (inflate, from libarc) and the installer's `W3DSW14.SHR` (PKWARE DCL "implode", decompressed by `explode.c`) |
 | `c4inc/stdint.h` | the fixed-width types, which C4IX's libc lacks |
 | `tools/unshr.c` | the same unpacking on a host, for the test |
