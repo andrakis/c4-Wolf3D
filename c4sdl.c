@@ -17,6 +17,7 @@
 
 int c4sdl_timedemo;            // virtual time, and frames counted
 int c4sdl_sound;               // --sound: a timedemo plays sound too
+int c4sdl_direct;              // --direct: the display itself, not a window (plat-c4ix.c)
 unsigned int c4sdl_frames;
 unsigned int c4sdl_sum;
 static unsigned int c4sdl_vclock;

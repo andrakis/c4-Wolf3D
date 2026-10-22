@@ -9,6 +9,27 @@ keyboard; the mouse is not wired up yet.
 [docs/c4ix-wolf3d.md](../../docs/c4ix-wolf3d.md) is the whole story: how
 it was ported, what c4lc needed, and how fast it goes.
 
+## Where it runs
+
+The same game objects run in four places. Only the platform underneath
+changes:
+
+| where | how | platform |
+|---|---|---|
+| a C4IX desktop window | `wolf3d`, or Go > Wolfenstein 3D | `plat-c4ix.c`: the Terminal window as a canvas |
+| C4IX, the whole display | `wolf3d --direct`, like `raycast -G`; the page's `?system=wolf3d-c4ix` | `plat-c4ix.c` handing over to `plat-gui.c` |
+| C4DOS | `WOLF3D` at the `A>` prompt; the page's `?system=c4dos` | `plat-bare.c`, over `plat-gui.c` |
+| the bare machine | `wolf3d.c4r` as the machine's image; the page's `?system=wolf3d` | `plat-bare.c`, over `plat-gui.c` |
+
+`plat-gui.c` draws on libjs's display itself (`libjs/guest/gui.h`): the
+game's 320x200 scaled to 640x480 by the host, with keys from the display. The last
+two have no C4IX: the game is linked whole with libc and with `bare.c`,
+libc's system layer over the machine's own opcodes
+([src/c4ix/libc/README.md](../c4ix/libc/README.md), "Without C4IX"). They
+read the game's files already unpacked, from build-images.sh's
+`images/wolf3d` disk, since neither can write a drive. All four play the
+same timedemo frames as the gcc build.
+
 ## Where it comes from
 
 - **The game:** [Wolf4SDL](https://github.com/KS-Presto/Wolf4SDL) v2.0 by
@@ -33,7 +54,9 @@ it was ported, what c4lc needed, and how fast it goes.
 | `id_*.c`, `wl_*.c`, `*.h`, `signon.c`, `wolfpal.inc` | Wolf4SDL, with the changes below |
 | `sdl/SDL.h`, `sdl/SDL_mixer.h` | the part of SDL 2 the game uses, and no more |
 | `c4sdl.c` | those functions, over a platform (`plat.h`): a window, key events, the clock and a sound card; SDL_mixer's calls over that card; the timedemo's virtual clock and frame checksum |
-| `plat-c4ix.c` | the platform on C4IX: the Terminal window as a canvas (`window.h`'s `win_fb`), and libjs's sound card (`libjs/guest/snd.h`) |
+| `plat-c4ix.c` | the platform on C4IX: the Terminal window as a canvas (`window.h`'s `win_fb`), or with `--direct` the whole display (`plat-gui.c`) |
+| `plat-gui.c` | the display drawn directly (`libjs/guest/gui.h`), the browser's key codes as SDL scancodes, and libjs's sound card (`libjs/guest/snd.h`) for every platform that has one |
+| `plat-bare.c` | the platform with no C4IX: the bare machine and C4DOS, over `plat-gui.c` |
 | `plat-host.c` | the platform on a host, built with gcc: no window and no sound, frames to `.ppm` on request |
 | `c4file.c`, `c4file.h` | files read and written whole, since C4IX had no seek when they were written (`lseek` came with M7c, docs/busybox-port.md) |
 | `wolfinst.c`, `explode.c`, `arc.c` | the first run: `1wolf14.zip` (inflate, from libarc) and the installer's `W3DSW14.SHR` (PKWARE DCL "implode", decompressed by `explode.c`) |
@@ -60,5 +83,6 @@ rewrites are gone.
 ## Building and testing
 
 - `make wolf3d-objs` compiles each unit with c4lc into `.wolf3d/`. `build-images.sh` links them against C4IX's libc as `/usr/games/wolf3d/wolf3d.c4r`, beside the zip.
+- `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/wolf3d/wolf3d.c4r`, on a disk with the game unpacked and C4DOS's files.
 - `make wolf3d-host` is the gcc build.
-- `make test-wolf3d` plays demo 0 both ways and compares the frames. A timedemo is silent unless `--sound` is given; `node libjs/cli.js --wav FILE` records what it plays.
+- `make test-wolf3d` plays demo 0 built by gcc, inside C4IX, on the bare machine and under C4DOS, and compares the frames. A timedemo is silent unless `--sound` is given; `node libjs/cli.js --wav FILE` records what it plays.

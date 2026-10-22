@@ -100,6 +100,7 @@ boolean param_ignorenumchunks = false;
 int     param_timedemo = 0;            // c4sdl: how many demos --timedemo plays
 extern int c4sdl_timedemo;
 extern int c4sdl_sound;
+extern int c4sdl_direct;
 extern unsigned int c4sdl_frames, c4sdl_sum;
 void WolfData(void);
 unsigned int plat_ticks(void);
@@ -1790,6 +1791,8 @@ void CheckParameters(int argc, char *argv[])
             param_ignorenumchunks = true;
         else IFARG("--sound")
             c4sdl_sound = 1;       // c4sdl: a timedemo plays sound too
+        else IFARG("--direct")
+            c4sdl_direct = 1;      // c4sdl: on C4IX, the display itself, as raycast -G
         else IFARG("--timedemo")
         {
             // c4sdl: play the demos in virtual time, then report

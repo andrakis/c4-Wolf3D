@@ -1,5 +1,7 @@
 // plat.h -- what c4sdl.c needs from the machine it runs on.
-// plat-host.c (gcc, headless) and plat-c4ix.c (a C4IX desktop window).
+// plat-host.c (gcc, headless); plat-c4ix.c (a C4IX desktop window, or with
+// --direct the display itself); plat-bare.c (the bare machine and C4DOS,
+// on the display itself). The display and the sound card are plat-gui.c's.
 
 #ifndef C4SDL_PLAT_H
 #define C4SDL_PLAT_H 1
@@ -30,5 +32,16 @@ void plat_snd_play(int ch, unsigned char *data, int len, int rate, int vol);
 void plat_snd_stop(int ch);              // -1: all
 void plat_snd_volume(int ch, int vol);
 int  plat_snd_busy(void);                // a bit per channel still playing
+
+// plat-gui.c: the display itself (libjs/guest/gui.h), for the bare
+// machine, C4DOS and C4IX's --direct; and a browser keyCode's scancode
+int  pg_open(const char *title, int w, int h);   // 0: there is no display
+void pg_close(void);
+void pg_present(unsigned char *pixels, int w, int h, int pitch, SDL_Color *pal);
+int  pg_event(int *kind, int *sc, int *ch);
+unsigned int pg_ticks(void);
+void pg_delay(unsigned int ms);
+int  plat_scancode(int code);
+extern int c4sdl_direct;                 // --direct: the display, not a window
 
 #endif

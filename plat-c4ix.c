@@ -1,6 +1,9 @@
 // plat-c4ix.c -- c4sdl's platform on C4IX: the Terminal window it runs
 // in becomes its canvas (window.h), showing 8-bit frames the desktop has
-// the host scale and colour (win_fb, GUI_BLIT8).
+// the host scale and colour (win_fb, GUI_BLIT8). With --direct, as
+// raycast -G does, the game takes libjs's display itself instead
+// (plat-gui.c), from a console with no desktop on it. The sound card is
+// plat-gui.c's either way.
 //
 // Two buffers: the desktop reads the one it was given when it next
 // draws, and says so (WIN_FRAME); until then a newer frame waits in the
@@ -17,7 +20,6 @@
 #include "SDL.h"
 #include "plat.h"
 #include "window.h"
-#include "snd.h"
 
 extern int c4sdl_timedemo;
 
@@ -36,12 +38,14 @@ int plat_init(void) {
 }
 
 void plat_quit(void) {
+    if (c4sdl_direct) { pg_close(); return; }
     if (windowed && !closed) { win_close(); closed = 1; }
 }
 
 void plat_open(const char *title, int w, int h) {
     int i;
     if (!windowed) return;
+    if (c4sdl_direct) { if (!pg_open(title, w, h)) windowed = 0; return; }
     fw = w; fh = h;
     for (i = 0; i < 2; i++) {
         fbuf[i] = (unsigned char *)calloc(w * h, 1);
@@ -59,7 +63,9 @@ static void send_frame(int b) {
 
 void plat_present(unsigned char *pixels, int w, int h, int pitch, SDL_Color *pal) {
     int b, y, i;
-    if (!windowed || w != fw || h != fh) return;
+    if (!windowed) return;
+    if (c4sdl_direct) { pg_present(pixels, w, h, pitch, pal); return; }
+    if (w != fw || h != fh) return;
     // the buffer the desktop is not reading
     b = waiting ? 1 - sent : sent;
     for (y = 0; y < h; y++) memcpy(fbuf[b] + y * w, pixels + y * pitch, w);
@@ -68,52 +74,10 @@ void plat_present(unsigned char *pixels, int w, int h, int pitch, SDL_Color *pal
     else send_frame(b);
 }
 
-// A browser keyCode as an SDL scancode
-static int scancode(int code) {
-    if (code >= 'A' && code <= 'Z') return SDL_SCANCODE_A + code - 'A';
-    if (code >= '1' && code <= '9') return SDL_SCANCODE_1 + code - '1';
-    if (code == '0') return SDL_SCANCODE_0;
-    if (code >= 112 && code <= 123) return SDL_SCANCODE_F1 + code - 112;
-    switch (code) {
-        case 13: return SDL_SCANCODE_RETURN;
-        case 27: return SDL_SCANCODE_ESCAPE;
-        case 8: return SDL_SCANCODE_BACKSPACE;
-        case 9: return SDL_SCANCODE_TAB;
-        case 32: return SDL_SCANCODE_SPACE;
-        case 189: case 173: return SDL_SCANCODE_MINUS;
-        case 187: case 61: return SDL_SCANCODE_EQUALS;
-        case 219: return SDL_SCANCODE_LEFTBRACKET;
-        case 221: return SDL_SCANCODE_RIGHTBRACKET;
-        case 220: return SDL_SCANCODE_BACKSLASH;
-        case 186: case 59: return SDL_SCANCODE_SEMICOLON;
-        case 222: return SDL_SCANCODE_APOSTROPHE;
-        case 192: return SDL_SCANCODE_GRAVE;
-        case 188: return SDL_SCANCODE_COMMA;
-        case 190: return SDL_SCANCODE_PERIOD;
-        case 191: return SDL_SCANCODE_SLASH;
-        case 20: return SDL_SCANCODE_CAPSLOCK;
-        case 145: return SDL_SCANCODE_SCROLLLOCK;
-        case 19: return SDL_SCANCODE_PAUSE;
-        case 45: return SDL_SCANCODE_INSERT;
-        case 46: return SDL_SCANCODE_DELETE;
-        case 36: return SDL_SCANCODE_HOME;
-        case 35: return SDL_SCANCODE_END;
-        case 33: return SDL_SCANCODE_PAGEUP;
-        case 34: return SDL_SCANCODE_PAGEDOWN;
-        case 37: return SDL_SCANCODE_LEFT;
-        case 38: return SDL_SCANCODE_UP;
-        case 39: return SDL_SCANCODE_RIGHT;
-        case 40: return SDL_SCANCODE_DOWN;
-        case 16: return SDL_SCANCODE_LSHIFT;
-        case 17: return SDL_SCANCODE_LCTRL;
-        case 18: return SDL_SCANCODE_LALT;
-    }
-    return SDL_SCANCODE_UNKNOWN;
-}
-
 int plat_event(int *kind, int *sc, int *ch) {
     int ev[3], k;
     if (!windowed || closed) return 0;
+    if (c4sdl_direct) return pg_event(kind, sc, ch);
     while (1) {
         k = win_poll(ev);
         if (k == WIN_NONE) return 0;
@@ -126,7 +90,7 @@ int plat_event(int *kind, int *sc, int *ch) {
         }
         if (k == WIN_KEY || k == WIN_KEYUP) {
             *kind = k == WIN_KEY ? PLAT_DOWN : PLAT_UP;
-            *sc = scancode(ev[0]);
+            *sc = plat_scancode(ev[0]);
             *ch = ev[1];
             if (*sc == SDL_SCANCODE_UNKNOWN && *ch == 0) continue;
             return 1;
@@ -136,23 +100,7 @@ int plat_event(int *kind, int *sc, int *ch) {
 
 unsigned int plat_ticks(void) { return clock(); }
 
-// ---- the sound card: libjs's, when the machine has one ----
-int plat_snd_open(int rate) {
-    if (!snd_present()) return 0;
-    snd_reset();
-    snd_clock(rate);
-    return 1;
-}
-void plat_snd_close(void) { if (snd_present()) snd_reset(); }
-void plat_snd_opl(int reg, int val) { snd_opl(reg, val); }
-void plat_snd_wait(int samples) { snd_wait(samples); }
-int  plat_snd_ahead(void) { return snd_ahead(); }
-void plat_snd_play(int ch, unsigned char *data, int len, int rate, int vol) { snd_play(ch, (char *)data, len, rate, vol); }
-void plat_snd_stop(int ch) { snd_stop(ch); }
-void plat_snd_volume(int ch, int vol) { snd_volume(ch, vol); }
-int  plat_snd_busy(void) { return snd_busy(); }
-
 void plat_delay(unsigned int ms) {
-
+    if (c4sdl_direct) { pg_delay(ms); return; }
     win_sleep(ms);
 }
