@@ -27,7 +27,7 @@ two have no C4IX: the game is linked whole with libc and with `bare.c`,
 libc's system layer over the machine's own opcodes
 ([src/c4ix/libc/README.md](../c4ix/libc/README.md), "Without C4IX"). They
 read the game's files already unpacked, from build-images.sh's
-`images/wolf3d` disk, since neither can write a drive. All four play the
+`images/games` disk, since neither can write a drive. All four play the
 same timedemo frames as the gcc build.
 
 ## Where it comes from
@@ -83,6 +83,6 @@ rewrites are gone.
 ## Building and testing
 
 - `make wolf3d-objs` compiles each unit with c4lc into `.wolf3d/`. `build-images.sh` links them against C4IX's libc as `/usr/games/wolf3d/wolf3d.c4r`, beside the zip.
-- `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/wolf3d/wolf3d.c4r`, on a disk with the game unpacked and C4DOS's files.
+- `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/games/wolf3d.c4r`, on a disk with the game unpacked, Doom (src/doom) and C4DOS's files.
 - `make wolf3d-host` is the gcc build.
 - `make test-wolf3d` plays demo 0 built by gcc, inside C4IX, on the bare machine and under C4DOS, and compares the frames. A timedemo is silent unless `--sound` is given; `node libjs/cli.js --wav FILE` records what it plays.
