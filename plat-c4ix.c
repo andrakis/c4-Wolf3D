@@ -25,6 +25,7 @@
 #include "display.h"
 
 extern int c4sdl_timedemo;
+int unice(int id, int nice);            // libc4ix (c4ix_user.h): nice, sched.c
 
 static int windowed;
 static unsigned char *fbuf[2];          // the frames: [sent] the desktop's
@@ -37,6 +38,8 @@ static int closed;
 
 int plat_init(void) {
     windowed = !c4sdl_timedemo || getenv("WOLF_WINDOW") != NULL;
+    // a game asks to be served sooner and longer than the rest (nice, sched.c)
+    if (windowed) unice(0, -5);
     return 0;
 }
 
