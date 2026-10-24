@@ -80,6 +80,7 @@ rewrites are gone.
 - **The original 320x200 in 8 bits**, presented through a palette by the host (`GUI_BLIT8`).
 - **`--timedemo [N]`** plays the first N demos in virtual time and prints each one's frame count and a checksum of every frame shown. The gcc and c4lc builds must print the same.
 - **`--secrets` and `--nodeath`**, two switches for fun (below).
+- **The registered game**, `wolf3d6`, built again with `-D WOLF_FULL` (below).
 
 ## For fun: `--secrets` and `--nodeath`
 
@@ -113,10 +114,40 @@ To play with them:
 in its south-west corner; add `--goobers` for id's debug keys
 (Backspace+Left Shift+Alt in the game, then Tab+H hurts the player by 16).
 
+## The registered game: `wolf3d6`
+
+Wolf4SDL is built for one set of data files, since their graphics are
+numbered differently: `wolf3d` is the shareware episode (`UPLOAD`,
+`gfxv_apo.h`). `wolf3d6` is the same game built again with `-D WOLF_FULL`,
+which `version.h` turns into `GOODTIMES`: id's v1.4 of the six episodes,
+as GT, Activision, GOG and Steam sell it, whose `*.WL6` files have 149
+graphics chunks (`gfxv_wl6.h`, from Wolf4SDL; `VGAHEAD.WL6` is 450 bytes).
+Apogee's own registered v1.4 (162 chunks, with Read This!) is not it.
+
+Those files are the person's own, so no disk has them. `wolf3d6` finds
+them where it is run, or on the host's drive 0, where the page's
+**Uploads** put them (libjs/README.md): drop the eight `*.WL6` files on
+the page, or add them with the Uploads button, then Boot with them.
+Without them it says so and stops. On C4IX the uploads are not in its
+own tree but opened from the host when nothing there has the name
+(`sys_open`), so its check for `vswap.wl6` opens the file rather than
+`stat()`ing it (`wl_menu.c`), and nothing is unpacked (`wolfinst.c`).
+Its configuration and saved games are written where it runs, as
+`wolf3d`'s are.
+
+| where | how |
+|---|---|
+| the page, the bare machine | `?system=wolf3d6`, or Wolfenstein 3D, registered |
+| the page, C4DOS | `?system=c4dos`, then `WOLF3D6` at the `A>` prompt |
+| C4IX | `wolf3d6`, in a Terminal or from Go > Run... |
+
+`--secrets` and `--nodeath` work there too.
+
 ## Building and testing
 
 - `make wolf3d-objs` compiles each unit with c4lc into `.wolf3d/`. `build-images.sh` links them against C4IX's libc as `/usr/games/wolf3d/wolf3d.c4r`, beside the zip.
 - `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/games/wolf3d.c4r`, on a disk with the game unpacked, Doom (games/doom) and C4DOS's files.
-- `make wolf3d-host` is the gcc build.
+- `make wolf3d6-objs` compiles the units that see `version.h` again with `-D WOLF_FULL` into `.wolf3d6/`, and `build-images.sh` links them with the rest of `.wolf3d/`'s as `/usr/games/wolf3d/wolf3d6.c4r` and `images/games/wolf3d6.c4r`. `make c4bb-images` builds them with the others.
+- `make wolf3d-host` is the gcc build, and `make wolf3d6-host` the registered one.
 - `make test-wolf3d` plays demo 0 built by gcc, inside C4IX, on the bare machine and under C4DOS, and compares the frames. A timedemo is silent unless `--sound` is given; `node libjs/cli.js --wav FILE` records what it plays.
 - To compare how fast the game runs between machines, add `--show`: the frames go to the display (or to the window, with `--window`) as well, so the time counts the drawing. Each demo prints a speed line before its checksum, `speed: demo 0: 1234 frames in 9.876 s, 124.9 fps`, by the real clock. In the page that clock is the wall's; under `cli.js`, unpaced, it is cycles over the MHz asked for.

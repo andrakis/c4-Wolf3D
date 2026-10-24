@@ -123,6 +123,13 @@ int WolfInstall(char *zip) {
 // Where the game's files are: here, or WOLF_HOME, where C4IX ships them
 // (the game changes there); unpacked from 1wolf14.zip the first time.
 #define WOLF_HOME "/usr/games/wolf3d"
+#ifdef WOLF_FULL
+// The registered game (wolf3d6): its files are the person's own, so none
+// ship and none are unpacked. They are where it is run, or on the host's
+// drive 0, where the page's Uploads put them -- which C4IX opens when its
+// own tree has no such file (sys_open), though stat() does not see them.
+void WolfData(void) { }
+#else
 void WolfData(void) {
     struct stat st;
     if (stat("vswap.wl1", &st) == 0) return;
@@ -130,3 +137,4 @@ void WolfData(void) {
     if (stat("vswap.wl1", &st) == 0) return;
     if (stat("1wolf14.zip", &st) == 0) WolfInstall("1wolf14.zip");
 }
+#endif

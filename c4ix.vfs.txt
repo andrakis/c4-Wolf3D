@@ -1,6 +1,8 @@
 # Wolfenstein 3D (games/wolf3d): the game, and Apogee's shareware
 # package as it was distributed, which the game unpacks here the
-# first time it runs
+# first time it runs; and the registered game, wolf3d6, whose files
+# are the person's own
 wolf3d/:
 	wolf3d.c4r: c4ix-wolf3d.c4r
+	wolf3d6.c4r: c4ix-wolf3d6.c4r
 	1wolf14.zip

@@ -7,8 +7,11 @@
 
 //#define SPEAR
 //#define SPEARDEMO
-#define UPLOAD
-//#define GOODTIMES
+#ifndef WOLF_FULL                         // c4sdl: -D WOLF_FULL, the registered game, wolf3d6 (README.md):
+#define UPLOAD                            // id's v1.4 as GT, Activision, GOG and Steam sell it
+#else
+#define GOODTIMES
+#endif
 #define CARMACIZED
 //#define APOGEE_1_0
 //#define APOGEE_1_1

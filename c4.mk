@@ -35,6 +35,17 @@ wolf3d-bare-objs: .wolf3d-bare/plat-bare.c4o libc-bare-objs
 	$(WOLF_CC) $< $@ > /dev/null
 PHONY += wolf3d-bare-objs
 
+# ... and the registered game, wolf3d6 (README.md, "The registered
+# game"): the units that see version.h, again with -D WOLF_FULL, into
+# .wolf3d6/. c4-images.sh links them with the rest of .wolf3d/'s.
+WOLF6_UNITS := wolfinst id_ca id_in id_pm id_sd id_us id_vh id_vl signon wl_act1 wl_act2 wl_agent \
+               wl_debug wl_draw wl_game wl_inter wl_main wl_menu wl_play wl_scale wl_state wl_text
+wolf3d6-objs: $(WOLF6_UNITS:%=.wolf3d6/%.c4o)
+.wolf3d6/%.c4o: $(WOLF)/%.c $(WOLF_HDRS) $(C4LC_LISP) .img_g | c4sp32
+	@mkdir -p .wolf3d6
+	$(WOLF_CC) -D WOLF_FULL $< $@ > /dev/null
+PHONY += wolf3d6-objs
+
 # The data, which is not in the repository: data/1wolf14.zip, the shareware
 # package as it was distributed, checked by its SHA-256. c4's
 # games/fetch.sh takes it from $WOLF3D_ZIP when that names a copy, or
@@ -50,6 +61,8 @@ WOLF_HOST_SRCS := $(filter-out $(WOLF)/plat-c4ix.c $(WOLF)/plat-gui.c $(WOLF)/wo
                   $(WOLF_UNITS:%=$(WOLF)/%.c)) $(WOLF)/plat-host.c
 wolf3d-host: $(WOLF_HOST_SRCS) $(wildcard $(WOLF)/*.h $(WOLF)/sdl/*.h)
 	gcc -O2 -std=gnu99 -w -Werror-implicit-function-declaration -I$(WOLF)/sdl -I$(WOLF) -o $@ $(WOLF_HOST_SRCS) -lm
+wolf3d6-host: $(WOLF_HOST_SRCS) $(wildcard $(WOLF)/*.h $(WOLF)/sdl/*.h)
+	gcc -O2 -std=gnu99 -w -Werror-implicit-function-declaration -D WOLF_FULL -I$(WOLF)/sdl -I$(WOLF) -o $@ $(WOLF_HOST_SRCS) -lm
 
 # test-wolf3d: demo 0 in virtual time, built both ways, must show the same
 # 1214 frames. Inside C4IX the game first unpacks 1wolf14.zip from the
@@ -84,5 +97,5 @@ test-wolf3d: wolf3d-data wolf3d-host c4bb-images
 	@echo "test-wolf3d: OK"
 PHONY += test-wolf3d
 
-GAME_OBJS  += wolf3d-objs wolf3d-bare-objs
+GAME_OBJS  += wolf3d-objs wolf3d-bare-objs wolf3d6-objs
 GAME_TESTS += test-wolf3d

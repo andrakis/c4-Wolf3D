@@ -3736,6 +3736,17 @@ ShootSnd (void)
 // CHECK FOR EPISODES
 //
 ///////////////////////////////////////////////////////////////////////////
+#ifndef UPLOAD
+static int c4sdl_found (const char *name)
+{
+    FILE *f = fopen (name, "rb");
+    if (!f)
+        return 0;
+    fclose (f);
+    return 1;
+}
+#endif
+
 void
 CheckForEpisodes (void)
 {
@@ -3810,7 +3821,10 @@ CheckForEpisodes (void)
         Quit ("NO WOLFENSTEIN 3-D DATA FILES to be found!");
 #else
 #ifndef SPEAR
-    if(!stat("vswap.wl6", &statbuf))
+    // c4sdl: opened, not stat()ed, since C4IX finds a file the page's
+    // Uploads put on the host's drive only by opening it (wolfinst.c);
+    // and wolf3d6 is for the registered files alone (gfxv_wl6.h)
+    if(c4sdl_found("vswap.wl6"))
     {
         snprintf (extension,sizeof(extension),"wl6");
         NewEmenu[2].active =
@@ -3825,23 +3839,11 @@ CheckForEpisodes (void)
         EpisodeSelect[5] = 1;
     }
     else
-    {
-        if(!stat("vswap.wl3", &statbuf))
-        {
-            snprintf (extension,sizeof(extension),"wl3");
-            NewEmenu[2].active =
-            NewEmenu[4].active =
-            EpisodeSelect[1] =
-            EpisodeSelect[2] = 1;
-        }
-        else
-        {
-            if(!stat("vswap.wl1", &statbuf))
-                snprintf (extension,sizeof(extension),"wl1");
-            else
-                Quit ("NO WOLFENSTEIN 3-D DATA FILES to be found!");
-        }
-    }
+        Quit ("NO REGISTERED WOLFENSTEIN 3-D DATA FILES to be found!
+"
+              "wolf3d6 plays the registered game from its *.WL6 files:
+"
+              "beside it, or added with the page's Uploads.");
 #endif
 #endif
 
