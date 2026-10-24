@@ -38,6 +38,16 @@ short           anglefrac;
 
 objtype        *LastAttacker;
 
+//
+// c4sdl: --nodeath, never in a demo, which would go its own way. At 0
+// health the player limps: a lurching step, half speed, then a drag at an
+// eighth, LIMPCYCLE tics in all, and turning at half speed
+//
+#define LIMPOK      (param_nodeath && !demoplayback && !demorecord)
+#define LIMPING     (LIMPOK && gamestate.health <= 0)
+#define LIMPCYCLE   40
+int             limpclock;
+
 /*
 =============================================================================
 
@@ -167,6 +177,9 @@ void ControlMovement (objtype *ob)
 
     thrustspeed = 0;
 
+    if (LIMPING)
+        limpclock = (limpclock + tics) % LIMPCYCLE;
+
     if(buttonstate[bt_strafeleft])
     {
         angle = ob->angle + ANGLES/4;
@@ -218,7 +231,7 @@ void ControlMovement (objtype *ob)
         //
         // not strafing
         //
-        anglefrac += controlx;
+        anglefrac += LIMPING ? controlx / 2 : controlx;
         angleunits = anglefrac/ANGLESCALE;
         anglefrac -= angleunits*ANGLESCALE;
         ob->angle -= angleunits;
@@ -300,6 +313,11 @@ void DrawFace (void)
         else
 #endif
             StatusDrawFace(FACE1APIC+3*((100-gamestate.health)/16)+gamestate.faceframe);
+    }
+    else if (LIMPING)
+    {
+        // c4sdl: --nodeath, the bloodiest face, passing out now and then
+        StatusDrawFace(gamestate.faceframe ? FACE7APIC+gamestate.faceframe : FACE8APIC);
     }
     else
     {
@@ -427,8 +445,20 @@ void TakeDamage (int points,objtype *attacker)
 
     if (gamestate.health<=0)
     {
-        gamestate.health = 0;
-        playstate = ex_died;
+        if (LIMPOK)
+        {
+            // c4sdl: --nodeath. Down at 0 the player limps on instead
+            // (ControlMovement), with the death cry on going down, and it
+            // still takes 100 health to be whole again
+            if (gamestate.health + points > 0 && !godmode)
+                SD_PlaySound (PLAYERDEATHSND);
+            gamestate.health = 0;
+        }
+        else
+        {
+            gamestate.health = 0;
+            playstate = ex_died;
+        }
     }
 
     if (godmode != 2)
@@ -1017,6 +1047,9 @@ void Thrust (int angle, int32_t speed)
     if (speed)
         funnyticount = 0;
 #endif
+
+    if (LIMPING)
+        speed = limpclock < LIMPCYCLE / 2 ? speed / 2 : speed / 8;   // c4sdl: --nodeath
 
     thrustspeed += speed;
     //

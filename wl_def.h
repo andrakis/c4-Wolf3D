@@ -991,6 +991,8 @@ extern  int      param_audiobuffer;
 extern  int      param_mission;
 extern  boolean  param_goodtimes;
 extern  boolean  param_ignorenumchunks;
+extern  boolean  param_secrets;         // c4sdl: --secrets
+extern  boolean  param_nodeath;         // c4sdl: --nodeath
 
 
 void            NewGame (int difficulty, int episode);

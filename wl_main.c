@@ -98,6 +98,8 @@ int     param_mission = 0;
 boolean param_goodtimes = false;
 boolean param_ignorenumchunks = false;
 int     param_timedemo = 0;            // c4sdl: how many demos --timedemo plays
+boolean param_secrets = false;         // c4sdl: --secrets, the pushwalls shown tinted
+boolean param_nodeath = false;         // c4sdl: --nodeath, limping at 0 health, not dead
 extern int c4sdl_timedemo;
 extern int c4sdl_sound;
 extern int c4sdl_show;
@@ -1804,6 +1806,10 @@ void CheckParameters(int argc, char *argv[])
             c4sdl_direct = 1;      // c4sdl: on C4IX, the display itself, as raycast -G (the default)
         else IFARG("--window")
             c4sdl_direct = 0;      // c4sdl: on C4IX, the Terminal window instead
+        else IFARG("--secrets")
+            param_secrets = true;  // c4sdl: the secret pushwalls drawn tinted (wl_draw.c)
+        else IFARG("--nodeath")
+            param_nodeath = true;  // c4sdl: at 0 health the player limps on (wl_agent.c)
         else IFARG("--timedemo")
         {
             // c4sdl: play the demos in virtual time, then report

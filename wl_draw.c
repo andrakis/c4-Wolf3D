@@ -412,6 +412,66 @@ void ScaleSkyPost (void)
 /*
 ====================
 =
+= SecretPost
+=
+= c4sdl: --secrets. A pushwall not pushed yet (plane 1's PUSHABLETILE,
+= which PushWall clears) has its column copied through secretshade, each
+= colour remapped to the palette's nearest to a brighter, warmer one: the
+= same texture, a little gold. ScalePost draws it as any other column.
+=
+====================
+*/
+
+static byte secretshade[256];
+static byte secretpost[TEXTURESIZE];
+static boolean secretshaded;
+
+static void BuildSecretShade (void)
+{
+    int i, j, r, g, b, dr, dg, db, d, best, bestd;
+
+    for (i = 0; i < 256; i++)
+    {
+        r = gamepal[i].r * 5 / 4 + 32;
+        g = gamepal[i].g * 9 / 8 + 16;
+        b = gamepal[i].b * 3 / 4;
+        if (r > 255) r = 255;
+        if (g > 255) g = 255;
+        best = i;
+        bestd = 0x7fffffff;
+        for (j = 0; j < 255; j++)
+        {
+            dr = gamepal[j].r - r;
+            dg = gamepal[j].g - g;
+            db = gamepal[j].b - b;
+            d = dr * dr + dg * dg + db * db;
+            if (d < bestd)
+            {
+                bestd = d;
+                best = j;
+            }
+        }
+        secretshade[i] = best;
+    }
+    secretshaded = true;
+}
+
+static void SecretPost (int x, int y)
+{
+    int i;
+
+    if (MAPSPOT(x,y,1) != PUSHABLETILE)
+        return;
+    if (!secretshaded)
+        BuildSecretShade ();
+    for (i = 0; i < TEXTURESIZE; i++)
+        secretpost[i] = secretshade[postsource[i]];
+    postsource = secretpost;
+}
+
+/*
+====================
+=
 = HitVertWall
 =
 = tilehit bit 7 is 0, because it's not a door tile
@@ -453,6 +513,8 @@ void HitVertWall (void)
 #ifdef USE_SKYWALLPARALLAX
     postsourcesky = postsource - texture;
 #endif
+    if (param_secrets)
+        SecretPost (xtile, yinttile);
     ScalePost ();
 }
 
@@ -500,6 +562,8 @@ void HitHorizWall (void)
 #ifdef USE_SKYWALLPARALLAX
     postsourcesky = postsource - texture;
 #endif
+    if (param_secrets)
+        SecretPost (xinttile, ytile);
     ScalePost ();
 }
 

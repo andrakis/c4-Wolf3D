@@ -79,6 +79,39 @@ rewrites are gone.
 - **Sound through libjs's sound card.** `id_sd.c`'s AdLib calls (`YM3812Write` and the rest) go to the card's OPL, and the game's own music player runs from its loop, keeping the card 100 ms ahead. The digitized sounds play as the game's 8-bit samples at 7,042 Hz, not converted. The PC speaker's sounds are silent. With no card (`plat-host.c`) the game runs silent, as before.
 - **The original 320x200 in 8 bits**, presented through a palette by the host (`GUI_BLIT8`).
 - **`--timedemo [N]`** plays the first N demos in virtual time and prints each one's frame count and a checksum of every frame shown. The gcc and c4lc builds must print the same.
+- **`--secrets` and `--nodeath`**, two switches for fun (below).
+
+## For fun: `--secrets` and `--nodeath`
+
+Neither changes the game unless it is given, and the demos play as
+before with either (with `--secrets` a timedemo's checksums change, as
+the frames do).
+
+- **`--secrets`** shows where the secrets are. A pushwall that has not
+  been pushed yet (plane 1's `PUSHABLETILE`) is drawn a little gold: the
+  same texture, each colour remapped to the palette's nearest to a
+  brighter, warmer one (`SecretPost` in `wl_draw.c`). Once pushed it
+  looks like any other wall.
+- **`--nodeath`**: instead of dying, the player goes down to 0 health
+  with the death cry and limps on: a lurching step at half speed, then a
+  drag at an eighth, and turning at half speed. The status bar's face is
+  the bloodiest one, passing out now and then. Enemies can still shoot,
+  but it cannot get worse. Health is picked up as usual, so it still
+  takes 100 to be whole again, and the limp ends with the first point
+  back (`LIMPING` in `wl_agent.c`). The demos never limp, so that they
+  play as they were recorded.
+
+To play with them:
+
+| where | how |
+|---|---|
+| the page, the bare machine | `?system=wolf3d&args=--secrets+--nodeath`, or Configuration > Arguments |
+| the page, C4DOS | `?system=c4dos`, then `WOLF3D --secrets --nodeath` at the `A>` prompt |
+| the C4IX desktop | Go > Run... `wolf3d --secrets --nodeath`, or the same in a Terminal |
+
+`--tedlevel 3` starts straight in E1M4, whose first room has a pushwall
+in its south-west corner; add `--goobers` for id's debug keys
+(Backspace+Left Shift+Alt in the game, then Tab+H hurts the player by 16).
 
 ## Building and testing
 
