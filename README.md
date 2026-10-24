@@ -1,4 +1,4 @@
-# src/wolf3d — Wolfenstein 3D on C4IX
+# games/wolf3d — Wolfenstein 3D on C4IX
 
 id Software's Wolfenstein 3D (1992), as Wolf4SDL has it, compiled by c4lc
 for C4IX's libc and played in a desktop window. The shareware episode
@@ -83,7 +83,7 @@ rewrites are gone.
 ## Building and testing
 
 - `make wolf3d-objs` compiles each unit with c4lc into `.wolf3d/`. `build-images.sh` links them against C4IX's libc as `/usr/games/wolf3d/wolf3d.c4r`, beside the zip.
-- `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/games/wolf3d.c4r`, on a disk with the game unpacked, Doom (src/doom) and C4DOS's files.
+- `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/games/wolf3d.c4r`, on a disk with the game unpacked, Doom (games/doom) and C4DOS's files.
 - `make wolf3d-host` is the gcc build.
 - `make test-wolf3d` plays demo 0 built by gcc, inside C4IX, on the bare machine and under C4DOS, and compares the frames. A timedemo is silent unless `--sound` is given; `node libjs/cli.js --wav FILE` records what it plays.
 - To compare how fast the game runs between machines, add `--show`: the frames go to the display (or to the window, with `--window`) as well, so the time counts the drawing. Each demo prints a speed line before its checksum, `speed: demo 0: 1234 frames in 9.876 s, 124.9 fps`, by the real clock. In the page that clock is the wall's; under `cli.js`, unpaced, it is cycles over the MHz asked for.
