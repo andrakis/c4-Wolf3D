@@ -13,7 +13,7 @@
 // window, and a frame is never shown half drawn.
 //
 // --timedemo runs without a window (the frames are checksummed, not
-// shown), unless WOLF_WINDOW is set.
+// shown), unless --show is given or WOLF_WINDOW is set.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +25,7 @@
 #include "display.h"
 
 extern int c4sdl_timedemo;
+extern int c4sdl_show;
 int unice(int id, int nice);            // libc4ix (c4ix_user.h): nice, sched.c
 
 static int windowed;
@@ -37,7 +38,7 @@ static int fw, fh;
 static int closed;
 
 int plat_init(void) {
-    windowed = !c4sdl_timedemo || getenv("WOLF_WINDOW") != NULL;
+    windowed = !c4sdl_timedemo || c4sdl_show || getenv("WOLF_WINDOW") != NULL;
     // a game asks to be served sooner and longer than the rest (nice, sched.c)
     if (windowed) unice(0, -5);
     return 0;

@@ -86,3 +86,4 @@ rewrites are gone.
 - `make wolf3d-bare-objs` compiles `plat-bare.c`, and libc without `-fpic` with `bare.c` for its system layer, into `.wolf3d-bare/`. `build-images.sh` links them with the same game objects as `images/games/wolf3d.c4r`, on a disk with the game unpacked, Doom (src/doom) and C4DOS's files.
 - `make wolf3d-host` is the gcc build.
 - `make test-wolf3d` plays demo 0 built by gcc, inside C4IX, on the bare machine and under C4DOS, and compares the frames. A timedemo is silent unless `--sound` is given; `node libjs/cli.js --wav FILE` records what it plays.
+- To compare how fast the game runs between machines, add `--show`: the frames go to the display (or to the window, with `--window`) as well, so the time counts the drawing. Each demo prints a speed line before its checksum, `speed: demo 0: 1234 frames in 9.876 s, 124.9 fps`, by the real clock. In the page that clock is the wall's; under `cli.js`, unpaced, it is cycles over the MHz asked for.

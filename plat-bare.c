@@ -7,6 +7,7 @@
 #include "plat.h"
 
 extern int c4sdl_timedemo;
+extern int c4sdl_show;
 
 static int shown;
 
@@ -14,7 +15,7 @@ int plat_init(void) { return 0; }
 void plat_quit(void) { pg_close(); }
 
 void plat_open(const char *title, int w, int h) {
-    if (!c4sdl_timedemo) shown = pg_open(title, w, h);
+    if (!c4sdl_timedemo || c4sdl_show) shown = pg_open(title, w, h);
 }
 
 void plat_present(unsigned char *pixels, int w, int h, int pitch, SDL_Color *pal) {

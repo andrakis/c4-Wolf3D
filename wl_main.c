@@ -100,6 +100,7 @@ boolean param_ignorenumchunks = false;
 int     param_timedemo = 0;            // c4sdl: how many demos --timedemo plays
 extern int c4sdl_timedemo;
 extern int c4sdl_sound;
+extern int c4sdl_show;
 extern int c4sdl_direct;
 extern unsigned int c4sdl_frames, c4sdl_sum;
 void WolfData(void);
@@ -1607,7 +1608,7 @@ static void DemoLoop()
 static void TimeDemo (void)
 {
     int i;
-    unsigned before;
+    unsigned before, frames, ms;
     uint32_t t0;
 
     for (i = 0; i < param_timedemo; i++)
@@ -1615,6 +1616,12 @@ static void TimeDemo (void)
         before = c4sdl_frames;
         t0 = plat_ticks();
         PlayDemo (i);
+        // c4sdl: how fast it went, by the real clock, before the checksum's line
+        frames = c4sdl_frames - before;
+        ms = plat_ticks() - t0;
+        if (!ms) ms = 1;
+        printf ("speed: demo %d: %u frames in %u.%03u s, %u.%u fps\n", i, frames,
+            ms / 1000, ms % 1000, frames * 10000 / ms / 10, frames * 10000 / ms % 10);
         printf ("timedemo: demo %d: %u frames, checksum %08x, %u ms\n", i,
             c4sdl_frames - before, c4sdl_sum, plat_ticks() - t0);
     }
@@ -1789,6 +1796,8 @@ void CheckParameters(int argc, char *argv[])
             param_goodtimes = true;
         else IFARG("--ignorenumchunks")
             param_ignorenumchunks = true;
+        else IFARG("--show")
+            c4sdl_show = 1;        // c4sdl: a timedemo on the display or window too
         else IFARG("--sound")
             c4sdl_sound = 1;       // c4sdl: a timedemo plays sound too
         else IFARG("--direct")
