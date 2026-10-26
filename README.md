@@ -11,7 +11,7 @@ it was ported, what c4lc needed, and how fast it goes.
 
 ## Where it runs
 
-The same game objects run in four places. Only the platform underneath
+The same game objects run in five places. Only the platform underneath
 changes:
 
 | where | how | platform |
@@ -19,6 +19,7 @@ changes:
 | C4IX, the whole display | `wolf3d`, or Go > Wolfenstein 3D, the desktop giving way until it ends (`include/display.h`); the page's `?system=wolf3d-c4ix` | `plat-c4ix.c` handing over to `plat-gui.c` |
 | a C4IX desktop window | `wolf3d --window` | `plat-c4ix.c`: the Terminal window as a canvas |
 | C4DOS | `WOLF3D` at the `A>` prompt; the page's `?system=c4dos` | `plat-bare.c`, over `plat-gui.c` |
+| a grin window, under C4DOS | Program Manager's Games > Wolfenstein 3D, or `WOLF3D.C4R` in File Manager or a DOS Prompt, in grin (`?system=c4dos` boots into it) | `plat-bare.c`, through grin's table (below) |
 | the bare machine | `wolf3d.c4r` as the machine's image; the page's `?system=wolf3d` | `plat-bare.c`, over `plat-gui.c` |
 
 `plat-gui.c` draws on libjs's display itself (`libjs/guest/gui.h`): the
@@ -29,6 +30,18 @@ libc's system layer over the machine's own opcodes
 read the game's files already unpacked, from build-images.sh's
 `images/games` disk, since neither can write a drive. All four play the
 same timedemo frames as the gcc build.
+
+Under grin, C4DOS's Windows 3.1-style shell (c4's `docs/grin-plan.md`,
+3.6), the display is grin's, and grin publishes a table in C4DOS's slot
+25 while it has it. The bare platform layer looks there first: finding
+grin, it never takes the display (no `gui_attach`), and plays in a window
+of grin's instead, through the table's `fwin_open`, `fwin_frame` and
+`fwin_poll` -- the C4IX window's three calls, pointed at grin. Each poll
+runs grin's loop once, so grin's applications (a Clock, Notepad) carry on
+while the game plays; the window is 1x (320x200) or 2x (640x400), from its
+Size menu; keys reach the game only while its window has the focus; and
+closing the window ends the game, as quitting it would. Without grin -- at
+`A>`, full screen from grin, or on the bare machine -- nothing changes.
 
 ## Where it comes from
 
@@ -56,7 +69,7 @@ same timedemo frames as the gcc build.
 | `c4sdl.c` | those functions, over a platform (`plat.h`): a window, key events, the clock and a sound card; SDL_mixer's calls over that card; the timedemo's virtual clock and frame checksum |
 | `plat-c4ix.c` | the platform on C4IX: the whole display (`plat-gui.c`), taken from the desktop and given back, or with `--window` the Terminal window as a canvas (`window.h`'s `win_fb`) |
 | `plat-gui.c` | the display drawn directly (`libjs/guest/gui.h`), the browser's key codes as SDL scancodes, and libjs's sound card (`libjs/guest/snd.h`) for every platform that has one |
-| `plat-bare.c` | the platform with no C4IX: the bare machine and C4DOS, over `plat-gui.c` |
+| `plat-bare.c` | the platform with no C4IX: the bare machine and C4DOS, over `plat-gui.c`; under grin, a window of grin's |
 | `plat-host.c` | the platform on a host, built with gcc: no window and no sound, frames to `.ppm` on request |
 | `c4file.c`, `c4file.h` | files read and written whole, since C4IX had no seek when they were written (`lseek` came with M7c, docs/busybox-port.md) |
 | `wolfinst.c`, `explode.c`, `arc.c` | the first run: `1wolf14.zip` (inflate, from libarc) and the installer's `W3DSW14.SHR` (PKWARE DCL "implode", decompressed by `explode.c`) |
