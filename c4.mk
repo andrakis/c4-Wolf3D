@@ -91,7 +91,7 @@ test-wolf3d: wolf3d-data wolf3d-host c4bb-images
 	   || { echo "test-wolf3d: the bare machine's frames differ:"; tail -5 .wolf3d_t/bare.out; exit 1; }
 	@grep '^timedemo' .wolf3d_t/dos.out | sed 's/, [0-9]* ms$$//' | cmp -s .wolf3d_t/host.txt - \
 	   || { echo "test-wolf3d: C4DOS's frames differ:"; tail -5 .wolf3d_t/dos.out; exit 1; }
-	@grep -A1 '^timedemo' .wolf3d_t/dos.out | grep -q '^A>C4DOS version' \
+	@grep -A1 '^timedemo' .wolf3d_t/dos.out | grep -Eq '^A(:\\)?>C4DOS version' \
 	   || { echo "test-wolf3d: C4DOS did not come back to its prompt:"; tail -5 .wolf3d_t/dos.out; exit 1; }
 	@rm -rf .wolf3d_t
 	@echo "test-wolf3d: OK"
