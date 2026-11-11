@@ -137,22 +137,31 @@ as GT, Activision, GOG and Steam sell it, whose `*.WL6` files have 149
 graphics chunks (`gfxv_wl6.h`, from Wolf4SDL; `VGAHEAD.WL6` is 450 bytes).
 Apogee's own registered v1.4 (162 chunks, with Read This!) is not it.
 
-Those files are the person's own, so no disk has them. `wolf3d6` finds
-them where it is run, or on the host's drive 0, where the page's
-**Uploads** put them (libjs/README.md): drop the eight `*.WL6` files on
-the page, or add them with the Uploads button, then Boot with them.
-Without them it says so and stops. On C4IX the uploads are not in its
-own tree but opened from the host when nothing there has the name
-(`sys_open`), so its check for `vswap.wl6` opens the file rather than
-`stat()`ing it (`wl_menu.c`), and nothing is unpacked (`wolfinst.c`).
-Its configuration and saved games are written where it runs, as
-`wolf3d`'s are.
+Those files are the person's own, so no disk has them. The page's
+**Uploads** put them on the host's drive 0 (libjs/README.md): pick
+`/home/wolf3d` as the folder, drop the eight `*.WL6` files on the page or
+add them with Add files..., then Boot with them. `wolf3d6` looks for
+`vswap.wl6` in its own folder first, then in `/home`, then where it is
+run (`c4sdl_finddata`, `wl_menu.c`), and reads every data file from the
+first folder that has it (`c4file_datadir`, `c4file.c`):
+
+| | its folder | then |
+|---|---|---|
+| C4IX (it has a `/home`) | `/home/wolf3d/` | `/home/`; where it runs, and drive 0's root |
+| the bare machine, C4DOS | `wolf3d/` at drive 0's root (`A:\WOLF3D`) | drive 0's root |
+
+So files uploaded to `/home` before there were folders still play.
+Without them it says so and stops. Each check opens the file rather than
+`stat()`ing it, since on C4IX a name nothing in its tree has is the
+host's (`sys_open`), and nothing is unpacked (`wolfinst.c`). Its
+configuration and saved games are written where it runs, as `wolf3d`'s
+are, whichever folder the data came from.
 
 | where | how |
 |---|---|
 | the page, the bare machine | `?system=wolf3d6`, or Wolfenstein 3D, registered |
 | the page, C4DOS | `?system=c4dos`, then `WOLF3D6` at the `A>` prompt |
-| C4IX | `wolf3d6`, in a Terminal or from Go > Run... |
+| C4IX | Go > Games > Wolfenstein 3D (your files), or `wolf3d6` in a Terminal |
 
 `--secrets` and `--nodeath` work there too.
 
