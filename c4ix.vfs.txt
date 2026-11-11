@@ -3,6 +3,7 @@
 # first time it runs; and the registered game, wolf3d6, whose files
 # are the person's own
 #@app Games|Wolfenstein 3D|wolf3d
+#@app Games|Wolfenstein 3D (your files)|wolf3d6
 wolf3d/:
 	wolf3d.c4r: c4ix-wolf3d.c4r
 	wolf3d6.c4r: c4ix-wolf3d6.c4r
