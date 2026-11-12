@@ -24,6 +24,28 @@ static int grow(WFILE *f, int need) {
     return 1;
 }
 
+// Where the game's data files are, when they are not where it runs:
+// wl_menu.c's CheckForEpisodes sets it to the first folder that has
+// vswap ("/home/wolf3d/" and the like: README.md, "The registered
+// game"), and the data files are read from there. Its configuration and
+// saved games stay where it runs.
+char c4file_datadir[48];
+static char *datastem[] = { "vswap.", "audiohed.", "audiot.", "gamemaps.", "maphead.",
+                            "vgadict.", "vgagraph.", "vgahead.", 0 };
+
+static FILE *w_open_data(const char *path) {
+    char full[sizeof(c4file_datadir) + 16];
+    char **s;
+    if (!c4file_datadir[0] || strchr(path, '/') || strlen(path) > 15) return NULL;
+    for (s = datastem; *s; s++)
+        if (!strncmp(path, *s, strlen(*s))) {
+            strcpy(full, c4file_datadir);
+            strcat(full, path);
+            return fopen(full, "rb");
+        }
+    return NULL;
+}
+
 WFILE *w_fopen(const char *path, const char *mode) {
     WFILE *f;
     FILE *h;
@@ -33,7 +55,8 @@ WFILE *w_fopen(const char *path, const char *mode) {
     f->writing = mode[0] == 'w';
     strncpy(f->path, path, sizeof(f->path) - 1);
     if (f->writing) return f;
-    h = fopen(path, "rb");
+    h = w_open_data(path);
+    if (!h) h = fopen(path, "rb");
     if (!h) { free(f); return NULL; }
     while (1) {
         if (!grow(f, f->len + 65536)) { fclose(h); free(f->buf); free(f); return NULL; }
