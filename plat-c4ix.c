@@ -31,6 +31,8 @@ int unice(int id, int nice);            // libc4ix (c4ix_user.h): nice, sched.c
 static int windowed;
 static unsigned char *fbuf[2];          // the frames: [sent] the desktop's
 static int *fpal[2];                    // their colours, 0x00RRGGBB
+static SDL_Color *ffrom[2];             // ... made from these colours
+static unsigned int fgen[2];            // at this c4sdl_palgen
 static int sent;                        // the buffer the desktop has
 static int waiting;                     // it has not yet drawn it
 static int pending;                     // the other holds a newer frame
@@ -84,7 +86,11 @@ void plat_present(unsigned char *pixels, int w, int h, int pitch, SDL_Color *pal
     // the buffer the desktop is not reading
     b = waiting ? 1 - sent : sent;
     for (y = 0; y < h; y++) memcpy(fbuf[b] + y * w, pixels + y * pitch, w);
-    for (i = 0; i < 256; i++) fpal[b][i] = (pal[i].r << 16) | (pal[i].g << 8) | pal[i].b;
+    // its colours, made again only when they have changed since it was last sent
+    if (pal != ffrom[b] || c4sdl_palgen != fgen[b]) {
+        for (i = 0; i < 256; i++) fpal[b][i] = (pal[i].r << 16) | (pal[i].g << 8) | pal[i].b;
+        ffrom[b] = pal; fgen[b] = c4sdl_palgen;
+    }
     if (waiting) pending = 1;
     else send_frame(b);
 }

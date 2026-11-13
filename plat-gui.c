@@ -24,6 +24,8 @@ enum { PG_W = 640, PG_H = 480, PG_RING = 65536 };
 static int pg_on;                       // the display is ours
 static int *pg_ring;
 static int pg_pal[256];                 // 0x00RRGGBB
+static SDL_Color *pg_from;              // ... made from these colours
+static unsigned int pg_gen;             // at this c4sdl_palgen
 static int pg_w, pg_h;
 
 // The display, or 0 (with why) where there is none
@@ -50,7 +52,11 @@ void pg_close(void) {
 void pg_present(unsigned char *pixels, int w, int h, int pitch, SDL_Color *pal) {
     int i;
     if (!pg_on || w != pg_w || h != pg_h) return;
-    for (i = 0; i < 256; i++) pg_pal[i] = (pal[i].r << 16) | (pal[i].g << 8) | pal[i].b;
+    // the colours as the display takes them, made again only when they change
+    if (pal != pg_from || c4sdl_palgen != pg_gen) {
+        for (i = 0; i < 256; i++) pg_pal[i] = (pal[i].r << 16) | (pal[i].g << 8) | pal[i].b;
+        pg_from = pal; pg_gen = c4sdl_palgen;
+    }
     gui_blit8(0, 0, w, h, (char *)pixels, pitch, pg_pal, PG_W, PG_H);
     gui_show();
 }

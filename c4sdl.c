@@ -21,6 +21,7 @@ int c4sdl_show;                // --show: a timedemo on the display or window to
 int c4sdl_direct = 1;          // the display itself; --window: a window (plat-c4ix.c)
 unsigned int c4sdl_frames;
 unsigned int c4sdl_sum;
+unsigned int c4sdl_palgen = 1;  // counts palette changes: a platform converts it only then
 static unsigned int c4sdl_vclock;
 
 // ---- start-up, errors, hints ----
@@ -94,6 +95,7 @@ void SDL_FreeSurface(SDL_Surface *s) {
 
 int SDL_SetPaletteColors(SDL_Palette *p, const SDL_Color *colors, int first, int n) {
     memcpy(p->colors + first, colors, n * sizeof(SDL_Color));
+    ++c4sdl_palgen;
     return 0;
 }
 

@@ -43,5 +43,6 @@ unsigned int pg_ticks(void);
 void pg_delay(unsigned int ms);
 int  plat_scancode(int code);
 extern int c4sdl_direct;                 // --direct: the display, not a window
+extern unsigned int c4sdl_palgen;        // SDL_SetPaletteColors counts: the colours changed
 
 #endif
